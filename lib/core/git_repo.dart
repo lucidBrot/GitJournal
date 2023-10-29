@@ -103,7 +103,8 @@ class GitNoteRepository {
   }
 
   Future<Result<void>> _addAllAndCommit(String commitMessage) async {
-    var r = await _add(".");
+    var r = await _add("."); // Why would they take the current dir and not the repo path?
+                             // This causes a GitException... but it's not like I care. I don't use the git parts anyway.
     if (r.isFailure) {
       return fail(r);
     }
