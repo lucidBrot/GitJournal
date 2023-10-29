@@ -7,20 +7,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
 import 'package:function_types/function_types.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
-
 import 'package:gitjournal/analytics/analytics.dart';
 import 'package:gitjournal/error_reporting.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
 import 'package:gitjournal/iap/iap.dart';
 import 'package:gitjournal/iap/purchase_manager.dart';
 import 'package:gitjournal/iap/purchase_slider.dart';
 import 'package:gitjournal/iap/purchase_thankyou_screen.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/logger/logger.dart';
-import 'package:gitjournal/utils/utils.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 class PurchaseButton extends StatelessWidget {
   final ProductDetails? product;
@@ -32,35 +28,33 @@ class PurchaseButton extends StatelessWidget {
   const PurchaseButton(
     this.product,
     this.timePeriod, {
-    Key? key,
+    super.key,
     required this.subscription,
     required this.purchaseStarted,
     required this.purchaseCompleted,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     String text;
     if (product != null) {
-      text = tr(LocaleKeys.widgets_PurchaseButton_text, namedArgs: {
-        'price': product!.price,
-      });
+      text = context.loc.widgetsPurchaseButtonText(product!.price);
       if (subscription) {
         text += '/ $timePeriod';
       }
     } else {
-      text = tr(LocaleKeys.widgets_PurchaseButton_fail);
+      text = context.loc.widgetsPurchaseButtonFail;
     }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(32.0, 16.0, 32.0, 16.0),
       child: ElevatedButton(
-        child: Text(text, textAlign: TextAlign.center),
         onPressed: product != null ? () => _reportExceptions(context) : null,
         style: ButtonStyle(
           backgroundColor:
               MaterialStateProperty.all<Color>(Theme.of(context).primaryColor),
         ),
+        child: Text(text, textAlign: TextAlign.center),
       ),
     );
   }
@@ -77,7 +71,7 @@ class PurchaseButton extends StatelessWidget {
 
     /*
     if (!sentSuccess) {
-      var dialog = PurchaseFailedDialog(tr("widgets.PurchaseButton.failSend"));
+      var dialog = PurchaseFailedDialog(context.loc.widgets.PurchaseButton.failSend);
       await showDialog(context: context, builder: (context) => dialog);
       return;
     }
@@ -90,10 +84,8 @@ class PurchaseButton extends StatelessWidget {
     } catch (err, stackTrace) {
       logException(err, stackTrace);
 
-      var errStr = tr(
-        "widgets.PurchaseButton.failPurchase",
-        args: [err.toString()],
-      );
+      var errStr =
+          context.loc.widgetsPurchaseButtonFailPurchase(err.toString());
       var _ = await showDialog(
         context: context,
         builder: (context) => PurchaseFailedDialog(errStr),
@@ -109,12 +101,12 @@ class PurchaseWidget extends StatefulWidget {
   final bool isSubscription;
 
   const PurchaseWidget({
-    Key? key,
+    super.key,
     required this.skus,
     required this.defaultSku,
     this.timePeriod = "",
     required this.isSubscription,
-  }) : super(key: key);
+  });
 
   @override
   _PurchaseWidgetState createState() => _PurchaseWidgetState();
@@ -212,8 +204,10 @@ class _PurchaseWidgetState extends State<PurchaseWidget> {
     );
 
     return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: <Widget>[
         Row(
+          mainAxisSize: MainAxisSize.max,
           children: <Widget>[
             _PurchaseSliderButton(
               icon: const Icon(Icons.arrow_left),
@@ -233,7 +227,6 @@ class _PurchaseWidgetState extends State<PurchaseWidget> {
               },
             ),
           ],
-          mainAxisSize: MainAxisSize.max,
         ),
         const SizedBox(height: 32.0),
         PurchaseButton(
@@ -248,7 +241,6 @@ class _PurchaseWidgetState extends State<PurchaseWidget> {
           purchaseCompleted: _purchaseCompleted,
         ),
       ],
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
     );
   }
 
@@ -317,74 +309,19 @@ class _PurchaseSliderButton extends StatelessWidget {
 class PurchaseFailedDialog extends StatelessWidget {
   final String text;
 
-  const PurchaseFailedDialog(this.text, {Key? key}) : super(key: key);
+  const PurchaseFailedDialog(this.text, {super.key});
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(tr(LocaleKeys.widgets_PurchaseWidget_failed)),
+      title: Text(context.loc.widgetsPurchaseWidgetFailed),
       content: Text(text),
       actions: <Widget>[
         TextButton(
-          child: Text(tr(LocaleKeys.settings_ok)),
+          child: Text(context.loc.settingsOk),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ],
-    );
-  }
-}
-
-class RestorePurchaseButton extends StatefulWidget {
-  const RestorePurchaseButton({Key? key}) : super(key: key);
-
-  @override
-  _RestorePurchaseButtonState createState() => _RestorePurchaseButtonState();
-}
-
-class _RestorePurchaseButtonState extends State<RestorePurchaseButton> {
-  bool computing = false;
-
-  @override
-  Widget build(BuildContext context) {
-    var text = computing ? '...' : tr(LocaleKeys.purchase_screen_restore);
-
-    return OutlinedButton(
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.bodyText2,
-      ),
-      onPressed: () async {
-        setState(() {
-          computing = true;
-        });
-        Log.i("Restoring Purchases");
-        var result = await InAppPurchases.confirmProPurchase();
-        if (result.isFailure) {
-          Log.e("confirmProPurchase", result: result);
-          var err = result.error ?? Exception("Unknown Error");
-          showErrorMessageSnackbar(context, err.toString());
-
-          setState(() {
-            computing = false;
-          });
-          return;
-        }
-
-        var sub = result.getOrThrow();
-        if (sub.isActive) {
-          Navigator.of(context).pop();
-        } else {
-          var expDate = sub.expiryDate != null
-              ? sub.expiryDate!.toIso8601String().substring(0, 10)
-              : LocaleKeys.purchase_screen_unknown;
-          var meesage = LocaleKeys.purchase_screen_expired.tr(args: [expDate]);
-          showSnackbar(context, meesage);
-
-          setState(() {
-            computing = false;
-          });
-        }
-      },
     );
   }
 }

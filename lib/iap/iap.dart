@@ -4,162 +4,52 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart' as foundation;
-
-import 'package:google_api_availability/google_api_availability.dart';
-import 'package:http/http.dart' as http;
-import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:in_app_purchase/store_kit_wrappers.dart';
-import 'package:universal_io/io.dart' show Platform;
-
-import 'package:gitjournal/error_reporting.dart';
-import 'package:gitjournal/features.dart';
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/settings/app_config.dart';
-import 'package:gitjournal/utils/result.dart';
+import 'package:http/http.dart' as http;
+import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:universal_io/io.dart' show Platform;
 
-class InAppPurchases {
+class GitJournalInAppPurchases {
   static Future<void> confirmProPurchaseBoot() async {
-    clearTransactionsIos();
     confirmPendingPurchases();
 
     var appConfig = AppConfig.instance;
-    if (Features.alwaysPro || !appConfig.validateProMode) {
+    if (!appConfig.validateProMode) {
       return;
     }
 
-    if (appConfig.proMode == false) {
-      Log.i("confirmProPurchaseBoot: Pro Mode is false");
+    if (appConfig.proMode) {
+      Log.i("confirmProPurchaseBoot: Already in ProMode");
       return;
     }
-
-    var exp = appConfig.proExpirationDate;
-
-    Log.i("Checking if ProMode should be enabled. Exp: $exp");
-    if (exp != null && exp.isAfter(DateTime.now())) {
-      Log.i("Not checking PurchaseInfo as exp = $exp");
-      return;
-    }
-
     if (foundation.kDebugMode) {
       Log.d("Ignoring IAP pro check - debug mode");
       return;
     }
 
-    var _ = confirmProPurchase();
-    return;
+    restorePurchases();
   }
 
-  static Future<Result<SubscriptionStatus>> confirmProPurchase() async {
-    SubscriptionStatus sub;
-
+  static Future<void> restorePurchases() async {
     Log.i("Trying to confirmProPurchase");
     try {
-      sub = await _subscriptionStatus();
+      await InAppPurchase.instance.restorePurchases();
     } catch (e, stackTrace) {
       Log.e("Failed to get subscription status", ex: e, stacktrace: stackTrace);
-      Log.i("Disabling Pro mode as it has probably expired");
+      Log.i("Disabling Pro mode");
 
-      AppConfig.instance.proExpirationDate = null;
+      AppConfig.instance.proMode = false;
       AppConfig.instance.save();
-
-      return Result.fail(e, stackTrace);
-    }
-
-    Log.i("SubscriptionState: $sub");
-
-    var expiryDate = sub.expiryDate;
-    Log.i("Pro ExpiryDate: $expiryDate");
-
-    var appConfig = AppConfig.instance;
-    if (appConfig.proExpirationDate != expiryDate) {
-      appConfig.proExpirationDate = expiryDate;
-      appConfig.save();
-    }
-
-    return Result(sub);
-  }
-
-  static Future<SubscriptionStatus> _subscriptionStatus() async {
-    InAppPurchaseConnection.enablePendingPurchases();
-    var iapConn = InAppPurchaseConnection.instance;
-    var dtNow = DateTime.now().toUtc();
-
-    var response = await iapConn.queryPastPurchases();
-    Log.i("Number of Past Purchases: ${response.pastPurchases.length}");
-
-    var subs = <SubscriptionStatus>[];
-    for (var purchase in response.pastPurchases) {
-      DateTime? dt;
-      try {
-        dt = await getExpiryDate(
-            purchase.verificationData.serverVerificationData,
-            purchase.productID,
-            _isPurchase(purchase));
-      } catch (e) {
-        // Ignore
-      }
-
-      if (dt == null || !dt.isAfter(dtNow)) {
-        continue;
-      }
-
-      var sub = SubscriptionStatus.pro(dt);
-      Log.i("--> $sub");
-      subs.add(sub);
-    }
-    Log.i("Number of SubscriptionStatus: ${subs.length}");
-
-    var dtMin = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
-    var sub = SubscriptionStatus.basic();
-    for (var s in subs) {
-      if (s.isActive == false) continue;
-
-      var dt = sub.expiryDate ?? dtMin;
-      if (s.expiryDate!.isAfter(dt)) {
-        sub = s;
-      }
-    }
-
-    return sub;
-  }
-
-  static Future<void> clearTransactionsIos() async {
-    if (!Platform.isIOS) {
-      return;
-    }
-
-    final transactions = await SKPaymentQueueWrapper().transactions();
-    Log.i("Old Transactions: ${transactions.length}");
-    for (final transaction in transactions) {
-      Log.i("Processing old transaction: $transaction");
-      try {
-        if (transaction.transactionState ==
-            SKPaymentTransactionStateWrapper.purchased) {
-          Log.i("Already purchased. Ignoring");
-          continue;
-        }
-        if (transaction.transactionState ==
-            SKPaymentTransactionStateWrapper.restored) {
-          Log.i("Already Restored. Ignoring");
-          continue;
-        }
-
-        if (transaction.transactionState !=
-            SKPaymentTransactionStateWrapper.purchasing) {
-          Log.i("Purchasing. Finishing Transaction.");
-
-          await SKPaymentQueueWrapper().finishTransaction(transaction);
-        }
-      } catch (e, stackTrace) {
-        logException(e, stackTrace);
-      }
     }
   }
 
   static Future<void> confirmPendingPurchases() async {
+    /*
     // On iOS this results in a "Sign in with Apple ID" dialog
     if (!Platform.isAndroid) {
       return;
@@ -187,6 +77,7 @@ class InAppPurchases {
         }
       }
     }
+    */
   }
 }
 
@@ -238,22 +129,15 @@ Future<DateTime?> getExpiryDate(
 }
 
 class SubscriptionStatus {
-  final DateTime? _expiryDate;
+  final bool _isPro;
 
-  DateTime? get expiryDate => _expiryDate;
+  SubscriptionStatus.basic() : _isPro = false;
+  SubscriptionStatus.pro() : _isPro = true;
 
-  SubscriptionStatus.basic() : _expiryDate = null;
-  SubscriptionStatus.pro(DateTime expDt)
-      : _expiryDate = expDt.millisecondsSinceEpoch > 0 ? expDt : null;
-
-  bool get isActive {
-    if (expiryDate == null) return false;
-    return DateTime.now().isBefore(expiryDate!);
-  }
+  bool get isActive => _isPro;
 
   @override
-  String toString() =>
-      "SubscriptionStatus{isActive: $isActive, expiryDate: $expiryDate}";
+  String toString() => "SubscriptionStatus{isActive: $isActive}";
 }
 
 Future<SubscriptionStatus> verifyPurchase(PurchaseDetails purchase) async {
@@ -262,10 +146,10 @@ Future<SubscriptionStatus> verifyPurchase(PurchaseDetails purchase) async {
     purchase.productID,
     _isPurchase(purchase),
   );
-  if (dt == null || !dt.isAfter(DateTime.now())) {
+  if (dt == null) {
     return SubscriptionStatus.basic();
   }
-  return SubscriptionStatus.pro(dt);
+  return SubscriptionStatus.pro();
 }
 
 // Checks if it is a subscription or a purchase

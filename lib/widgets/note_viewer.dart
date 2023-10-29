@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:gitjournal/core/folder/notes_folder.dart';
 import 'package:gitjournal/core/folder/notes_folder_fs.dart';
 import 'package:gitjournal/core/note.dart';
+import 'package:gitjournal/core/notes/note.dart';
 import 'package:gitjournal/core/org_links_handler.dart';
 import 'package:gitjournal/core/views/note_links_view.dart';
 import 'package:gitjournal/editors/editor_scroll_view.dart';
@@ -24,10 +25,10 @@ class NoteViewer extends StatelessWidget {
   final Note note;
   final NotesFolder parentFolder;
   const NoteViewer({
-    Key? key,
+    super.key,
     required this.note,
     required this.parentFolder,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +39,10 @@ class NoteViewer extends StatelessWidget {
         note.body,
         onLinkTap: handler.launchUrl,
         onLocalSectionLinkTap: (OrgSection section) {
-          Log.d("local section link: " + section.toString());
+          Log.d("local section link: $section");
         },
         onSectionLongPress: (OrgSection section) {
-          Log.d('local section long-press: ' + section.headline.rawTitle!);
+          Log.d('local section long-press: ${section.headline.rawTitle!}');
         },
       );
     }
@@ -49,6 +50,7 @@ class NoteViewer extends StatelessWidget {
     final rootFolder = Provider.of<NotesFolderFS>(context);
     var view = EditorScrollView(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           NoteTitleHeader(note.title ?? ""),
           Padding(
@@ -68,7 +70,6 @@ class NoteViewer extends StatelessWidget {
           ),
           // _buildFooter(context),
         ],
-        crossAxisAlignment: CrossAxisAlignment.start,
       ),
     );
 
@@ -111,7 +112,7 @@ class NoteTitleHeader extends StatelessWidget {
     var textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-      child: Text(header, style: textTheme.headline6),
+      child: Text(header, style: textTheme.titleLarge),
     );
   }
 }

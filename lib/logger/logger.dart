@@ -8,14 +8,13 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart' as foundation;
 
+import 'package:dart_git/utils/result.dart';
 import 'package:fimber/fimber.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'package:time/time.dart';
 import 'package:universal_io/io.dart';
-
-import 'package:gitjournal/apis/githost.dart';
 
 // FIXME: Only catch Exception? type. Something else needs to be done with Errors
 class Log {
@@ -118,7 +117,7 @@ class Log {
     }
 
     if (foundation.kDebugMode) {
-      Fimber.log("E", msg + " " + ex.toString() + stacktrace.toString(),
+      Fimber.log("E", "$msg $ex$stacktrace",
           ex: ex, stacktrace: stacktrace, tag: LogTree.getTag(stackIndex: 2));
     }
     _write('e', msg, ex, stacktrace, props);
@@ -164,7 +163,7 @@ class Log {
     }
 
     var str = json.encode(logMsg.toMap());
-    logFile!.writeStringSync(str + '\n');
+    logFile!.writeStringSync('$str\n');
   }
 
   static Future<void> setLogCapture(bool state) async {

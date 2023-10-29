@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:gitjournal/core/folder/notes_folder.dart';
 import 'package:gitjournal/core/folder/sorting_mode.dart';
 import 'package:gitjournal/core/note.dart';
+import 'package:gitjournal/core/notes/note.dart';
 import 'package:gitjournal/core/views/summary_view.dart';
 import 'package:gitjournal/folder_views/list_view.dart';
 import 'package:gitjournal/widgets/highlighted_text.dart';
@@ -84,7 +85,7 @@ class JournalNoteListTile extends StatelessWidget {
   static final _timeFormat = DateFormat('Hm');
 
   const JournalNoteListTile({
-    Key? key,
+    super.key,
     required this.searchTerm,
     required this.searchTermLowerCase,
     required this.noteTapped,
@@ -92,7 +93,7 @@ class JournalNoteListTile extends StatelessWidget {
     required this.note,
     required this.isSelected,
     required this.noteSummary,
-  }) : super(key: key);
+  });
 
   final String searchTerm;
   final String searchTermLowerCase;
@@ -117,24 +118,24 @@ class JournalNoteListTile extends StatelessWidget {
     var dateStr = _dateFormat.format(date);
     var time = _timeFormat.format(date);
 
-    var timeColor = textTheme.bodyText2!.color!.withAlpha(100);
+    var timeColor = textTheme.bodyMedium!.color!.withAlpha(100);
 
     var titleWidget = Row(
-      children: <Widget>[
-        Text(dateStr, style: textTheme.headline6),
-        Text(time, style: textTheme.bodyText2!.copyWith(color: timeColor)),
-      ],
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
+      children: <Widget>[
+        Text(dateStr, style: textTheme.titleLarge),
+        Text(time, style: textTheme.bodyMedium!.copyWith(color: timeColor)),
+      ],
     );
 
     var children = <Widget>[
       const SizedBox(height: 8.0),
       HighlightedText(
-        text: noteSummary + '\n', // no minLines option
+        text: '$noteSummary\n', // no minLines option
         maxLines: 3,
         overflow: TextOverflow.ellipsis,
-        style: textTheme.bodyText2!,
+        style: textTheme.bodyMedium!,
         highlightText: searchTerm,
         highlightTextLowerCase: searchTermLowerCase,
       ),
@@ -144,8 +145,8 @@ class JournalNoteListTile extends StatelessWidget {
       isThreeLine: true,
       title: titleWidget,
       subtitle: Column(
-        children: children,
         crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
       ),
       onTap: () => noteTapped(note),
       onLongPress: () => noteLongPressed(note),

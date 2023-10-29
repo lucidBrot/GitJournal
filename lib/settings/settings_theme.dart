@@ -4,24 +4,21 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import 'package:flutter/material.dart';
-
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flex_color_scheme/flex_color_scheme.dart';
-import 'package:provider/provider.dart';
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
+// import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:flutter/material.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/screens/home_screen.dart';
 import 'package:gitjournal/settings/settings.dart';
 import 'package:gitjournal/themes.dart';
+import 'package:provider/provider.dart';
 
 class SettingsThemeScreen extends StatefulWidget {
   static const routePath = '/settings/ui/theme';
 
   final Brightness brightness;
 
-  const SettingsThemeScreen(this.brightness, {Key? key}) : super(key: key);
+  const SettingsThemeScreen(this.brightness, {super.key});
 
   @override
   _SettingsThemeState createState() => _SettingsThemeState();
@@ -54,8 +51,8 @@ class _SettingsThemeState extends State<SettingsThemeScreen> {
     );
 
     var title = widget.brightness == Brightness.light
-        ? LocaleKeys.settings_theme_light.tr()
-        : LocaleKeys.settings_theme_dark.tr();
+        ? context.loc.settingsThemeLight
+        : context.loc.settingsThemeDark;
 
     var settings = Provider.of<Settings>(context);
     var themeName = widget.brightness == Brightness.light
@@ -81,6 +78,7 @@ class _SettingsThemeState extends State<SettingsThemeScreen> {
 
   Widget homeScreen(int i) {
     var themes = [
+      /*
       GitJournalTheme.fromFlexLight(
         name: "Mandy Red",
         flexScheme: FlexScheme.mandyRed,
@@ -97,6 +95,7 @@ class _SettingsThemeState extends State<SettingsThemeScreen> {
         name: "Amber",
         flexScheme: FlexScheme.amber,
       ),
+      */
     ];
 
     return _GitJournalThemeView(gjTheme: themes[i]);
@@ -106,8 +105,7 @@ class _SettingsThemeState extends State<SettingsThemeScreen> {
 class _GitJournalThemeView extends StatelessWidget {
   final GitJournalTheme gjTheme;
 
-  const _GitJournalThemeView({required this.gjTheme, Key? key})
-      : super(key: key);
+  const _GitJournalThemeView({required this.gjTheme});
 
   @override
   Widget build(BuildContext context) {
@@ -119,8 +117,8 @@ class _GitJournalThemeView extends StatelessWidget {
         width: mq.size.width,
         height: mq.size.height,
         child: IgnorePointer(
+          // ignoringSemantics: true,
           child: HomeScreen(),
-          ignoringSemantics: true,
         ),
       ),
     );
@@ -133,15 +131,15 @@ class _GitJournalThemeView extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              child: homeScreen,
               decoration: BoxDecoration(
                 border: Border.all(color: theme.dividerColor),
               ),
+              child: homeScreen,
             ),
             const SizedBox(height: 32),
             Text(
               gjTheme.name,
-              style: Theme.of(context).textTheme.headline3!.copyWith(
+              style: Theme.of(context).textTheme.displaySmall!.copyWith(
                     fontWeight: FontWeight.w400,
                   ),
             ),
@@ -163,8 +161,10 @@ class GitJournalTheme {
 
   GitJournalTheme({required this.name, required this.themeData});
 
+  /*
   GitJournalTheme.fromFlexLight({
     required this.name,
     required FlexScheme flexScheme,
   }) : themeData = FlexColorScheme.light(scheme: flexScheme).toTheme;
+  */
 }

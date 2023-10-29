@@ -4,30 +4,27 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
-import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-
 import 'package:gitjournal/core/folder/flattened_filtered_notes_folder.dart';
 import 'package:gitjournal/core/folder/notes_folder_fs.dart';
 import 'package:gitjournal/core/markdown/md_yaml_note_serializer.dart';
 import 'package:gitjournal/core/note.dart';
 import 'package:gitjournal/core/views/inline_tags_view.dart';
-import 'package:gitjournal/features.dart';
 import 'package:gitjournal/folder_views/folder_view.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/widgets/app_bar_menu_button.dart';
 import 'package:gitjournal/widgets/app_drawer.dart';
 import 'package:gitjournal/widgets/future_builder_with_progress.dart';
 import 'package:gitjournal/widgets/pro_overlay.dart';
+import 'package:provider/provider.dart';
 
 class TagListingScreen extends StatelessWidget {
   static const routePath = '/tags';
 
-  const TagListingScreen({Key? key}) : super(key: key);
+  const TagListingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +33,11 @@ class TagListingScreen extends StatelessWidget {
 
     return FutureBuilderWithProgress(future: () async {
       var allTags = await rootFolder.getNoteTagsRecursively(inlineTagsView);
-      return _buildWithTags(context, allTags);
+      return _buildWithTags(context, SplayTreeSet.from(allTags));
     }());
   }
 
-  Widget _buildWithTags(BuildContext context, ISet<String> allTags) {
+  Widget _buildWithTags(BuildContext context, Iterable<String> allTags) {
     Widget body;
     if (allTags.isNotEmpty) {
       body = ListView(
@@ -51,7 +48,7 @@ class TagListingScreen extends StatelessWidget {
     } else {
       body = Center(
         child: Text(
-          tr("screens.tags.empty"),
+          context.loc.screensTagsEmpty,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 28.0,
@@ -64,14 +61,11 @@ class TagListingScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(LocaleKeys.screens_tags_title)),
+        title: Text(context.loc.screensTagsTitle),
         leading: GJAppBarMenuButton(),
       ),
       body: Scrollbar(
-        child: ProOverlay(
-          feature: Feature.tags,
-          child: body,
-        ),
+        child: ProOverlay(child: body),
       ),
       drawer: AppDrawer(),
     );
@@ -79,7 +73,7 @@ class TagListingScreen extends StatelessWidget {
 
   Widget _buildTagTile(BuildContext context, String tag) {
     var theme = Theme.of(context);
-    var titleColor = theme.textTheme.headline1!.color;
+    var titleColor = theme.textTheme.displayLarge!.color;
 
     return ListTile(
       leading: FaIcon(FontAwesomeIcons.tag, color: titleColor),

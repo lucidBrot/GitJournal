@@ -5,9 +5,8 @@
  */
 
 import 'package:flutter/material.dart';
-
 import 'package:function_types/function_types.dart';
-
+import 'package:git_setup/screens.dart';
 import 'package:gitjournal/account/account_screen.dart';
 import 'package:gitjournal/account/login_screen.dart';
 import 'package:gitjournal/core/markdown/md_yaml_doc_codec.dart';
@@ -19,7 +18,6 @@ import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/repository.dart';
 import 'package:gitjournal/screens/error_screen.dart';
 import 'package:gitjournal/screens/folder_listing.dart';
-import 'package:gitjournal/screens/graph_view.dart';
 import 'package:gitjournal/screens/home_screen.dart';
 import 'package:gitjournal/screens/onboarding_screens.dart';
 import 'package:gitjournal/screens/tag_listing.dart';
@@ -27,8 +25,8 @@ import 'package:gitjournal/settings/app_config.dart';
 import 'package:gitjournal/settings/settings.dart';
 import 'package:gitjournal/settings/settings_screen.dart';
 import 'package:gitjournal/settings/storage_config.dart';
-import 'package:gitjournal/setup/screens.dart';
 import 'package:gitjournal/utils/utils.dart';
+import 'package:gitjournal/widgets/setup.dart';
 
 class AppRoute {
   static const NewNotePrefix = '/newNote/';
@@ -37,7 +35,6 @@ class AppRoute {
     OnBoardingScreen.routePath,
     FolderListingScreen.routePath,
     TagListingScreen.routePath,
-    GraphViewScreen.routePath,
     SettingsScreen.routePath,
     LoginPage.routePath,
     AccountScreen.routePath,
@@ -126,8 +123,6 @@ class AppRouter {
         return FolderListingScreen();
       case TagListingScreen.routePath:
         return const TagListingScreen();
-      case GraphViewScreen.routePath:
-        return const GraphViewScreen();
       case SettingsScreen.routePath:
         return SettingsScreen();
       case LoginPage.routePath:
@@ -135,9 +130,8 @@ class AppRouter {
       case AccountScreen.routePath:
         return const AccountScreen();
       case GitHostSetupScreen.routePath:
-        return GitHostSetupScreen(
+        return GitJournalGitSetupScreen(
           repoFolderName: storageConfig.folderName,
-          remoteName: "origin",
           onCompletedFunction: repository.completeGitHostSetup,
         );
       case OnBoardingScreen.routePath:

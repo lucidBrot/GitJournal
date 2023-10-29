@@ -6,11 +6,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-
-import 'package:easy_localization/easy_localization.dart' as local;
 import 'package:function_types/function_types.dart';
+import 'package:gitjournal/l10n.dart';
 
-import 'package:gitjournal/generated/locale_keys.g.dart';
 import 'common.dart';
 
 class SearchInfo {
@@ -42,12 +40,11 @@ class EditorAppSearchBar extends StatefulWidget implements PreferredSizeWidget {
   final Func2<String, int, void> scrollToResult;
 
   const EditorAppSearchBar({
-    Key? key,
+    super.key,
     required this.editorState,
     required this.onCloseSelected,
     required this.scrollToResult,
-  })  : preferredSize = const Size.fromHeight(kToolbarHeight),
-        super(key: key);
+  }) : preferredSize = const Size.fromHeight(kToolbarHeight);
 
   @override
   final Size preferredSize;
@@ -67,7 +64,7 @@ class _EditorAppSearchBarState extends State<EditorAppSearchBar> {
     super.initState();
 
     _focusNode = FocusNode();
-    SchedulerBinding.instance?.addPostFrameCallback((Duration _) {
+    SchedulerBinding.instance.addPostFrameCallback((Duration _) {
       FocusScope.of(context).requestFocus(_focusNode);
     });
   }
@@ -79,9 +76,9 @@ class _EditorAppSearchBarState extends State<EditorAppSearchBar> {
       automaticallyImplyLeading: false,
       title: TextField(
         focusNode: _focusNode,
-        style: theme.textTheme.subtitle1,
+        style: theme.textTheme.titleMedium,
         decoration: InputDecoration(
-          hintText: LocaleKeys.editors_common_find.tr(),
+          hintText: context.loc.editorsCommonFind,
           border: InputBorder.none,
         ),
         maxLines: 1,
@@ -98,11 +95,11 @@ class _EditorAppSearchBarState extends State<EditorAppSearchBar> {
       actions: [
         if (_searchInfo.isNotEmpty)
           TextButton(
+            onPressed: null,
             child: Text(
               '${_searchInfo.currentMatch.toInt() + 1}/${_searchInfo.numMatches}',
-              style: theme.textTheme.subtitle1,
+              style: theme.textTheme.titleMedium,
             ),
-            onPressed: null,
           ),
         // Disable these when not possible
         IconButton(

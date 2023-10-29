@@ -4,42 +4,53 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import 'package:grpc/grpc.dart';
+import 'package:dio/dio.dart';
+import 'package:dio_smart_retry/dio_smart_retry.dart';
 
 import 'package:gitjournal/.env.dart';
-import 'package:gitjournal/analytics/generated/analytics.pbgrpc.dart';
+import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/utils/result.dart';
 import 'generated/analytics.pb.dart' as pb;
 
-const _port = 443;
-const _timeout = Duration(seconds: 120);
+final dio = () {
+  var d = Dio();
+  d.options.connectTimeout = 10000; // 10 sec
+  d.options.receiveTimeout = 10000;
+
+  d.interceptors.add(RetryInterceptor(
+    dio: d,
+    logPrint: (x) => Log.d(x),
+    retries: 3,
+    retryDelays: const [
+      Duration(seconds: 1),
+      Duration(seconds: 5),
+      Duration(seconds: 15),
+    ],
+  ));
+  // d.interceptors.add(LogInterceptor(responseBody: true));
+  return d;
+}();
 
 Future<Result<void>> sendAnalytics(pb.AnalyticsMessage msg) async {
-  final channel = ClientChannel(
-    Env.analyticsUrl,
-    port: _port,
-    options: ChannelOptions(
-      // credentials: const ChannelCredentials.insecure(),
-      credentials: const ChannelCredentials.secure(),
-      codecRegistry: CodecRegistry(codecs: const [
-        IdentityCodec(),
-        GzipCodec(),
-      ]),
-    ),
-  );
+  assert(Env.analyticsUrl.isNotEmpty);
 
-  final client = AnalyticsServiceClient(channel);
   try {
-    var call = client.sendData(
-      msg,
-      options: CallOptions(timeout: _timeout),
+    final data = msg.writeToBuffer();
+    var _ = await dio.post(
+      Env.analyticsUrl,
+      // vHanda: Send POST data in DIO is so strange. It seems to mess up the data
+      //         if I just pass the Uint8List
+      data: Stream.fromIterable(data.map((e) => [e])),
+      options: Options(
+        contentType: "application/x-protobuf",
+        headers: {
+          Headers.contentLengthHeader: data.lengthInBytes.toString(),
+        },
+      ),
     );
-    var _ = await call;
-  } catch (e, st) {
-    await channel.shutdown();
-    return Result.fail(e, st);
+  } catch (ex, st) {
+    return Result.fail(ex, st);
   }
 
-  await channel.shutdown();
   return Result(null);
 }

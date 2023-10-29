@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import 'package:gitjournal/core/folder/notes_folder.dart';
 import 'package:gitjournal/core/note.dart';
+import 'package:gitjournal/core/notes/note.dart';
 import 'package:gitjournal/repository.dart';
 import 'package:gitjournal/settings/settings.dart';
 import 'package:gitjournal/utils/utils.dart';
@@ -35,8 +36,8 @@ class FolderListView extends StatefulWidget {
     required this.emptyText,
     required this.isNoteSelected,
     required this.searchTerm,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   _FolderListViewState createState() => _FolderListViewState();
@@ -158,8 +159,7 @@ class _FolderListViewState extends State<FolderListView> {
 
     if (settings.swipeToDelete) {
       viewItem = IconDismissable(
-        key: ValueKey("FolderListView_" + note.filePath),
-        child: viewItem,
+        key: ValueKey("FolderListView_${note.filePath}"),
         backgroundColor: Colors.red[800]!,
         iconData: Icons.delete,
         onDismissed: (direction) {
@@ -168,16 +168,17 @@ class _FolderListViewState extends State<FolderListView> {
           var stateContainer = context.read<GitJournalRepo>();
           stateContainer.removeNote(note);
 
-          var snackBar = buildUndoDeleteSnackbar(stateContainer, note);
+          var snackBar = buildUndoDeleteSnackbar(context, stateContainer, note);
           ScaffoldMessenger.of(context)
             ..removeCurrentSnackBar()
             ..showSnackBar(snackBar);
         },
+        child: viewItem,
       );
     }
 
     return SizeTransition(
-      key: ValueKey("FolderListView_tr_" + note.filePath),
+      key: ValueKey("FolderListView_tr_${note.filePath}"),
       axis: Axis.vertical,
       sizeFactor: animation,
       child: viewItem,

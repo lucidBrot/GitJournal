@@ -8,20 +8,17 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'package:easy_localization/easy_localization.dart';
-import 'package:provider/provider.dart';
-import 'package:time/time.dart';
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/settings/app_config.dart';
 import 'package:gitjournal/utils/utils.dart';
+import 'package:provider/provider.dart';
+import 'package:time/time.dart';
 
 class DebugScreen extends StatefulWidget {
   static const routePath = '/settings/debug';
 
-  const DebugScreen({Key? key}) : super(key: key);
+  const DebugScreen({super.key});
 
   @override
   _DebugScreenState createState() => _DebugScreenState();
@@ -37,7 +34,7 @@ class _DebugScreenState extends State<DebugScreen> {
     super.initState();
 
     _logs = Log.fetchLogs().toList();
-    WidgetsBinding.instance!.addPostFrameCallback((_) => _scrollToBottom());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
 
   void _scrollToTop() {
@@ -60,7 +57,7 @@ class _DebugScreenState extends State<DebugScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(LocaleKeys.settings_debug_title)),
+        title: Text(context.loc.settingsDebugTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -93,10 +90,10 @@ class _DebugScreenState extends State<DebugScreen> {
             width: 1000.0,
             child: ListView(
               controller: _controller,
+              padding: const EdgeInsets.all(16.0),
               children: <Widget>[
                 ..._fetchLogWidgets(),
               ],
-              padding: const EdgeInsets.all(16.0),
             ),
           ),
         ),
@@ -157,20 +154,20 @@ class _DebugScreenState extends State<DebugScreen> {
     }
 
     Clipboard.setData(ClipboardData(text: messages.join('\n')));
-    showSnackbar(context, tr(LocaleKeys.settings_debug_copy));
+    showSnackbar(context, context.loc.settingsDebugCopy);
   }
 
   Widget _buildLogWidget(LogMessage msg) {
     var origTextStyle = Theme.of(context)
         .textTheme
-        .bodyText2!
+        .bodyMedium!
         .copyWith(fontFamily: "Roboto Mono");
 
     var textStyle = origTextStyle.copyWith(color: _colorForLevel(msg.l));
 
     var dt = DateTime.fromMillisecondsSinceEpoch(msg.t);
     var timeStr = dt.toIso8601String().substring(11, 11 + 8);
-    var str = ' ' + msg.msg;
+    var str = ' ${msg.msg}';
 
     var props = <TextSpan>[];
     msg.props?.forEach((key, value) {
@@ -278,17 +275,17 @@ class _DebugScreenState extends State<DebugScreen> {
   Widget _buildDateWidget(DateTime dt) {
     var textStyle = Theme.of(context)
         .textTheme
-        .headline6!
+        .titleLarge!
         .copyWith(fontFamily: "Roboto Mono");
 
     var text = dt.toIso8601String().substring(0, 10);
     return Padding(
+      padding: const EdgeInsets.all(8.0),
       child: SelectableText(
         text,
         style: textStyle,
         textAlign: TextAlign.center,
       ),
-      padding: const EdgeInsets.all(8.0),
     );
   }
 
@@ -297,21 +294,20 @@ class _DebugScreenState extends State<DebugScreen> {
     var filterLevel = appConfig.debugLogLevel;
 
     var dialog = AlertDialog(
-      title: Text(tr(LocaleKeys.settings_debug_levels_title)),
+      title: Text(context.loc.settingsDebugLevelsTitle),
       content: Column(
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           FilterListTile(
-              tr(LocaleKeys.settings_debug_levels_error), 'e', filterLevel),
+              context.loc.settingsDebugLevelsError, 'e', filterLevel),
           FilterListTile(
-              tr(LocaleKeys.settings_debug_levels_warning), 'w', filterLevel),
+              context.loc.settingsDebugLevelsWarning, 'w', filterLevel),
+          FilterListTile(context.loc.settingsDebugLevelsInfo, 'i', filterLevel),
           FilterListTile(
-              tr(LocaleKeys.settings_debug_levels_info), 'i', filterLevel),
+              context.loc.settingsDebugLevelsDebug, 'd', filterLevel),
           FilterListTile(
-              tr(LocaleKeys.settings_debug_levels_debug), 'd', filterLevel),
-          FilterListTile(
-              tr(LocaleKeys.settings_debug_levels_verbose), 'v', filterLevel),
+              context.loc.settingsDebugLevelsVerbose, 'v', filterLevel),
         ],
-        mainAxisSize: MainAxisSize.min,
       ),
     );
     var l = await showDialog(context: context, builder: (context) => dialog);
@@ -331,8 +327,8 @@ class FilterListTile extends StatelessWidget {
     this.publicLevel,
     this.internalLevel,
     this.currentLevel, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -348,7 +344,7 @@ class FilterListTile extends StatelessWidget {
 
   Icon _getIcon(BuildContext context) {
     var theme = Theme.of(context);
-    var color = theme.textTheme.headline6!.color;
+    var color = theme.textTheme.titleLarge!.color;
     if (_isSelected()) {
       switch (theme.brightness) {
         case Brightness.light:

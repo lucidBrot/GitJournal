@@ -4,29 +4,27 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:flutter/material.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:provider/provider.dart';
 
-import 'package:gitjournal/generated/locale_keys.g.dart';
 import 'git_config.dart';
 
 class GitAuthorEmail extends StatelessWidget {
-  const GitAuthorEmail({Key? key}) : super(key: key);
+  const GitAuthorEmail({super.key});
 
   @override
   Widget build(BuildContext context) {
     var gitConfig = Provider.of<GitConfig>(context);
 
     return ListTile(
-      title: Text(LocaleKeys.settings_email_label.tr()),
+      title: Text(context.loc.settingsEmailLabel),
       subtitle: Text(gitConfig.gitAuthorEmail),
       onTap: () async {
         var newEmail = await showDialog(
           context: context,
-          builder: (context) => const _GitAuthorEmailDialog(),
+          builder: (context) => const GitAuthorEmailDialog(),
         );
 
         if (newEmail != null && newEmail != gitConfig.gitAuthorEmail) {
@@ -38,14 +36,14 @@ class GitAuthorEmail extends StatelessWidget {
   }
 }
 
-class _GitAuthorEmailDialog extends StatefulWidget {
-  const _GitAuthorEmailDialog({Key? key}) : super(key: key);
+class GitAuthorEmailDialog extends StatefulWidget {
+  const GitAuthorEmailDialog({super.key});
 
   @override
-  State<_GitAuthorEmailDialog> createState() => _GitAuthorEmailDialogState();
+  State<GitAuthorEmailDialog> createState() => _GitAuthorEmailDialogState();
 }
 
-class _GitAuthorEmailDialogState extends State<_GitAuthorEmailDialog> {
+class _GitAuthorEmailDialogState extends State<GitAuthorEmailDialog> {
   final gitAuthorEmailKey = GlobalKey<FormFieldState<String>>();
 
   @override
@@ -69,18 +67,18 @@ class _GitAuthorEmailDialogState extends State<_GitAuthorEmailDialog> {
     );
 
     return AlertDialog(
-      title: Text(LocaleKeys.settings_email_label.tr()),
+      title: Text(context.loc.settingsEmailLabel),
       content: form,
       actions: <Widget>[
         TextButton(
-          child: Text(tr(LocaleKeys.settings_cancel)),
+          child: Text(context.loc.settingsCancel),
           onPressed: () => Navigator.of(context).pop(),
         ),
         TextButton(
-          child: Text(tr(LocaleKeys.settings_ok)),
           onPressed: isValidEmail == true
               ? () => Navigator.of(context).pop(email)
               : null,
+          child: Text(context.loc.settingsOk),
         ),
       ],
     );
@@ -88,30 +86,30 @@ class _GitAuthorEmailDialogState extends State<_GitAuthorEmailDialog> {
 
   String? _validate(String? value) {
     if (value == null) {
-      return tr(LocaleKeys.settings_email_validator_empty);
+      return context.loc.settingsEmailValidatorEmpty;
     }
 
     value = value.trim();
     if (value.isEmpty) {
-      return tr(LocaleKeys.settings_email_validator_empty);
+      return context.loc.settingsEmailValidatorEmpty;
     }
 
     if (!EmailValidator.validate(value)) {
-      return tr(LocaleKeys.settings_email_validator_invalid);
+      return context.loc.settingsEmailValidatorInvalid;
     }
     return null;
   }
 }
 
 class GitAuthor extends StatelessWidget {
-  const GitAuthor({Key? key}) : super(key: key);
+  const GitAuthor({super.key});
 
   @override
   Widget build(BuildContext context) {
     var gitConfig = Provider.of<GitConfig>(context);
 
     return ListTile(
-      title: Text(LocaleKeys.settings_author_label.tr()),
+      title: Text(context.loc.settingsAuthorLabel),
       subtitle: Text(gitConfig.gitAuthor),
       onTap: () async {
         var newName = await showDialog(
@@ -129,7 +127,7 @@ class GitAuthor extends StatelessWidget {
 }
 
 class _GitAuthorDialog extends StatefulWidget {
-  const _GitAuthorDialog({Key? key}) : super(key: key);
+  const _GitAuthorDialog();
 
   @override
   __GitAuthorDialogState createState() => __GitAuthorDialogState();
@@ -150,7 +148,7 @@ class __GitAuthorDialogState extends State<_GitAuthorDialog> {
       validator: (String? value) {
         value = value!.trim();
         if (value.isEmpty) {
-          return tr(LocaleKeys.settings_author_validator);
+          return context.loc.settingsAuthorValidator;
         }
         return null;
       },
@@ -165,17 +163,17 @@ class __GitAuthorDialogState extends State<_GitAuthorDialog> {
     );
 
     return AlertDialog(
-      title: Text(LocaleKeys.settings_author_label.tr()),
+      title: Text(context.loc.settingsAuthorLabel),
       content: form,
       actions: <Widget>[
         TextButton(
-          child: Text(tr(LocaleKeys.settings_cancel)),
+          child: Text(context.loc.settingsCancel),
           onPressed: () => Navigator.of(context).pop(),
         ),
         TextButton(
-          child: Text(tr(LocaleKeys.settings_ok)),
           onPressed:
               isValid == true ? () => Navigator.of(context).pop(author) : null,
+          child: Text(context.loc.settingsOk),
         ),
       ],
     );

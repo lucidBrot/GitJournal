@@ -6,20 +6,16 @@
 
 import 'package:flutter/material.dart';
 
-import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'package:gitjournal/account/login_screen.dart';
-
 class AccountScreen extends StatefulWidget {
   static const routePath = '/account';
 
-  const AccountScreen({Key? key}) : super(key: key);
+  const AccountScreen({super.key});
 
   @override
   _AccountScreenState createState() => _AccountScreenState();
 }
 
-class _AccountScreenState extends SupabaseAuthRequiredState<AccountScreen> {
+class _AccountScreenState extends State<AccountScreen> {
   @override
   void initState() {
     super.initState();
@@ -27,23 +23,8 @@ class _AccountScreenState extends SupabaseAuthRequiredState<AccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var user = Supabase.instance.client.auth.currentUser;
-
-    return Scaffold(
-      body: Center(
-        child: user == null
-            ? const CircularProgressIndicator()
-            : Text(user.email!),
-      ),
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
     );
   }
-
-  @override
-  void onUnauthenticated() {
-    if (mounted) {
-      var _ = Navigator.pushReplacementNamed(context, LoginPage.routePath);
-    }
-  }
-
-  // Do we want to handle onAuthenticated ?
 }

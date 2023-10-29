@@ -9,83 +9,20 @@ import 'package:dart_date/dart_date.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
+import 'package:recase/recase.dart';
 import 'package:universal_io/io.dart' as io;
 import 'package:uuid/uuid.dart';
 
 import 'package:gitjournal/core/folder/notes_folder_fs.dart';
-import 'package:gitjournal/editors/common_types.dart';
 import 'package:gitjournal/error_reporting.dart';
 import 'package:gitjournal/generated/core.pb.dart' as pb;
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/settings/settings.dart';
 import 'package:gitjournal/utils/datetime.dart';
 import 'file/file.dart';
-import 'folder/notes_folder_config.dart';
 import 'markdown/md_yaml_doc.dart';
 import 'markdown/md_yaml_note_serializer.dart';
-
-typedef NoteSelectedFunction = void Function(Note note);
-typedef NoteBoolPropertyFunction = bool Function(Note note);
-
-enum NoteType { Unknown, Checklist, Journal, Org }
-
-class NoteFileFormatInfo {
-  final NotesFolderConfig config;
-  NoteFileFormatInfo(this.config);
-
-  static String defaultExtension(NoteFileFormat format) {
-    switch (format) {
-      case NoteFileFormat.Markdown:
-        return ".md";
-      case NoteFileFormat.OrgMode:
-        return '.org';
-      case NoteFileFormat.Txt:
-        return ".txt";
-    }
-  }
-
-  static EditorType defaultEditor(NoteFileFormat format) {
-    switch (format) {
-      case NoteFileFormat.Markdown:
-        return EditorType.Markdown;
-      case NoteFileFormat.Txt:
-        return EditorType.Raw;
-      case NoteFileFormat.OrgMode:
-        return EditorType.Org;
-    }
-  }
-
-  static NoteFileFormat fromFilePath(String filePath) {
-    var ext = p.extension(filePath).toLowerCase();
-    switch (ext) {
-      case ".md":
-        return NoteFileFormat.Markdown;
-      case ".org":
-        return NoteFileFormat.OrgMode;
-      case ".txt":
-      default:
-        return NoteFileFormat.Txt;
-    }
-  }
-
-  bool isAllowedFileName(String filePath) {
-    var noteFilePath = filePath.toLowerCase();
-    for (var ext in config.allowedFileExts) {
-      if (p.extension(noteFilePath) == ext) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-}
-
-// FIXME: Treat Markdown and Markdown + YAML differently
-enum NoteFileFormat {
-  Markdown,
-  OrgMode,
-  Txt,
-}
+import 'notes/note.dart';
 
 @immutable
 class Note implements File {
@@ -327,6 +264,9 @@ class Note implements File {
         return const Uuid().v4();
       case NoteFileNameFormat.Zettelkasten:
         return toZettleDateTime(date);
+      case NoteFileNameFormat.KebabCase:
+        title ??= toSimpleDateTime(date);
+        return buildKebabTitleFileName(parent.fullFolderPath, title, ext);
     }
 
     return date.toString();
@@ -603,7 +543,7 @@ String ensureFileNameUnique(String parentDir, String name, String ext) {
   }
 
   for (var i = 1;; i++) {
-    var fileName = name + "_$i$ext";
+    var fileName = "${name}_$i$ext";
     var fullPath = p.join(parentDir, fileName);
     var file = io.File(fullPath);
     if (!file.existsSync()) {
@@ -617,4 +557,11 @@ String buildTitleFileName(String parentDir, String title, String ext) {
   title = title.replaceAll(RegExp(r'[/<\>":|?*]'), '_');
 
   return ensureFileNameUnique(parentDir, title, ext);
+}
+
+String buildKebabTitleFileName(String parentDir, String title, String ext) {
+  // Sanitize the title - these characters are not allowed in Windows
+  title = title.replaceAll(RegExp(r'[/<\>":|?*]'), '-');
+
+  return ensureFileNameUnique(parentDir, title.camelCase, ext);
 }

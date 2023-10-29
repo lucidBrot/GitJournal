@@ -5,28 +5,25 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 
 class NoteDeleteDialog extends StatelessWidget {
   final int num;
 
-  const NoteDeleteDialog({Key? key, required this.num}) : super(key: key);
+  const NoteDeleteDialog({super.key, required this.num});
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(LocaleKeys.widgets_NoteDeleteDialog_title.plural(num)),
+      title: Text(context.loc.widgetsNoteDeleteDialogTitle(num)),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: Text(LocaleKeys.widgets_NoteDeleteDialog_no.tr()),
+          child: Text(context.loc.widgetsNoteDeleteDialogNo),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: Text(LocaleKeys.widgets_NoteDeleteDialog_yes.tr()),
+          child: Text(context.loc.widgetsNoteDeleteDialogYes),
         ),
       ],
     );

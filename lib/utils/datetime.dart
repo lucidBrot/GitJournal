@@ -1,13 +1,14 @@
 /*
  * SPDX-FileCopyrightText: 2019-2021 Vishesh Handa <me@vhanda.in>
  *
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 import 'dart:core';
 
 import 'package:dart_git/utils/date_time.dart';
 import 'package:fixnum/fixnum.dart' as fixnum;
+import 'package:gitjournal/core/markdown/md_yaml_note_serializer.dart';
 import 'package:intl/intl.dart';
 
 import 'package:gitjournal/generated/core.pb.dart' as pb;
@@ -49,19 +50,19 @@ String toIso8601WithTimezone(DateTime dt) {
 
   String hourStr;
   if (hours < 10) {
-    hourStr = '0' + hours.toString();
+    hourStr = '0$hours';
   } else {
     hourStr = hours.toString();
   }
 
   String minutesStr;
   if (minutes < 10) {
-    minutesStr = '0' + minutes.toString();
+    minutesStr = '0$minutes';
   } else {
     minutesStr = minutes.toString();
   }
 
-  return result + sign + hourStr + ':' + minutesStr;
+  return '$result$sign$hourStr:$minutesStr';
 }
 
 DateTime? parseDateTime(String str) {
@@ -70,14 +71,26 @@ DateTime? parseDateTime(String str) {
   } catch (ex) {
     Log.e("parseDateTime - '$str'", ex: ex);
   }
+
+  return null;
 }
 
-DateTime parseUnixTimeStamp(int val) {
-  return DateTime.fromMillisecondsSinceEpoch(val * 1000, isUtc: true);
+DateTime parseUnixTimeStamp(int val, NoteSerializationUnixTimestampMagnitude magnitude) {
+  if (magnitude == NoteSerializationUnixTimestampMagnitude.Seconds) {
+    val *= 1000;
+  }
+  return DateTime.fromMillisecondsSinceEpoch(val, isUtc: true);
 }
 
-int toUnixTimeStamp(DateTime dt) {
-  return dt.toUtc().millisecondsSinceEpoch ~/ 1000;
+int toUnixTimeStamp(DateTime dt, NoteSerializationUnixTimestampMagnitude magnitude) {
+  var timestamp = dt.toUtc();
+  switch (magnitude) {
+    case NoteSerializationUnixTimestampMagnitude.Milliseconds:
+      return timestamp.millisecondsSinceEpoch;
+    case NoteSerializationUnixTimestampMagnitude.Seconds:
+    default:
+      return timestamp.millisecondsSinceEpoch ~/ 1000;
+  }
 }
 
 extension ProtoBuf on DateTime {

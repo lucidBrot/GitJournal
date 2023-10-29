@@ -5,10 +5,8 @@
  */
 
 import 'package:flutter/material.dart';
-
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:function_types/function_types.dart';
-
 import 'package:gitjournal/editors/common_types.dart';
 
 // FIXME: Remove note_editor import!!
@@ -21,14 +19,17 @@ class NewNoteNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
+      // ignore: deprecated_member_use
       color: Theme.of(context).bottomAppBarColor,
       shape: const CircularNotchedRectangle(),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.all(4.0),
             child: IconButton(
-              icon: const FaIcon(FontAwesomeIcons.tasks),
+              icon: const FaIcon(FontAwesomeIcons.listCheck),
               onPressed: () => onPressed(EditorType.Checklist),
             ),
           ),
@@ -47,8 +48,6 @@ class NewNoteNavBar extends StatelessWidget {
             ),
           ),
         ],
-        mainAxisAlignment: MainAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
       ),
     );
   }

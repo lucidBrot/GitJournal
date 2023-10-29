@@ -5,16 +5,13 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
+import 'package:gitjournal/core/file/file_storage.dart';
+import 'package:gitjournal/l10n.dart';
+import 'package:gitjournal/repository.dart';
 import 'package:provider/provider.dart';
 
-import 'package:gitjournal/core/file/file_storage.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
-import 'package:gitjournal/repository.dart';
-
 class CacheLoadingScreen extends StatelessWidget {
-  const CacheLoadingScreen({Key? key}) : super(key: key);
+  const CacheLoadingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +23,7 @@ class CacheLoadingScreen extends StatelessWidget {
 class _CacheLoadingScreen extends StatefulWidget {
   final FileStorage fileStorage;
 
-  const _CacheLoadingScreen(this.fileStorage, {Key? key}) : super(key: key);
+  const _CacheLoadingScreen(this.fileStorage);
 
   @override
   _CacheLoadingScreenState createState() => _CacheLoadingScreenState();
@@ -54,14 +51,14 @@ class _CacheLoadingScreenState extends State<_CacheLoadingScreen> {
     var date = widget.fileStorage.dateTime;
     var dateText = date.toIso8601String().substring(0, 10);
 
-    var text = LocaleKeys.screens_cacheLoading_text.tr();
+    var text = context.loc.screensCacheLoadingText;
     var children = <Widget>[
       Padding(
         padding: const EdgeInsets.all(8.0),
         child: Text(
           text,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headline4,
+          style: Theme.of(context).textTheme.headlineMedium,
         ),
       ),
       Padding(
@@ -69,7 +66,7 @@ class _CacheLoadingScreenState extends State<_CacheLoadingScreen> {
         child: Text(
           dateText,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.subtitle1,
+          style: Theme.of(context).textTheme.titleMedium,
         ),
       ),
       const SizedBox(height: 8.0),

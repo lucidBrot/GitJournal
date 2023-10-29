@@ -25,8 +25,8 @@ class CommitDataWidget extends StatefulWidget {
     required this.gitRepo,
     required this.commit,
     required this.parentCommit,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   _CommitDataWidgetState createState() => _CommitDataWidgetState();
@@ -116,8 +116,7 @@ class _BlobLoader extends StatefulWidget {
     required this.gitRepo,
     required this.blobHash,
     required this.color,
-    Key? key,
-  }) : super(key: key);
+  });
 
   @override
   __BlobLoaderState createState() => __BlobLoaderState();
@@ -131,7 +130,7 @@ class __BlobLoaderState extends State<_BlobLoader> {
   void initState() {
     super.initState();
 
-    SchedulerBinding.instance!.addPostFrameCallback((_) => _initStateAsync);
+    SchedulerBinding.instance.addPostFrameCallback((_) => _initStateAsync);
   }
 
   void _initStateAsync() {
@@ -159,7 +158,7 @@ class __BlobLoaderState extends State<_BlobLoader> {
       var text = utf8.decode(blob.blobData);
 
       var theme = Theme.of(context);
-      var style = theme.textTheme.subtitle1!.copyWith(
+      var style = theme.textTheme.titleMedium!.copyWith(
         fontFamily: "Roboto Mono",
         color: widget.color,
       );

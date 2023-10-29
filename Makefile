@@ -5,13 +5,6 @@
 DIR := ${CURDIR}
 export PATH := $(DIR)/.flutter/bin/:$(PATH)
 
-keys:
-	mkdir -p /tmp/codegen
-	yq -o=json eval assets/langs/en.yaml -P > /tmp/codegen/en.json
-	./flutterw pub run easy_localization:generate -S /tmp/codegen -f keys -o locale_keys.g.dart
-	./flutterw format lib/generated
-	./flutterw pub run import_sorter:main lib/generated/*
-	reuse addheader --license 'AGPL-3.0-or-later' --copyright 'Vishesh Handa <me@vhanda.in>' --year '2019-2021' lib/generated/locale_keys.g.dart
 
 protos:
 	protoc --dart_out=grpc:lib/analytics/generated -Ilib/analytics/ lib/analytics/analytics.proto
@@ -19,8 +12,8 @@ protos:
 	protoc --dart_out=grpc:lib/generated -Iprotos protos/shared_preferences.proto
 	protoc --dart_out=grpc:lib/generated -Iprotos protos/builders.proto
 	protoc --dart_out=grpc:lib/generated -Iprotos protos/core.proto
-	./flutterw format lib/
-	./flutterw pub run import_sorter:main
+	rm lib/analytics/generated/analytics.pbgrpc.dart
+	flutter format lib/
 
 	reuse addheader --license 'AGPL-3.0-or-later' --copyright 'Vishesh Handa <me@vhanda.in>' --year '2021' lib/analytics/generated/*
 	reuse addheader --license 'AGPL-3.0-or-later' --copyright 'Vishesh Handa <me@vhanda.in>' --year '2021' lib/markdown/generated/*
@@ -29,30 +22,27 @@ protos:
 	git checkout lib/generated/locale_keys.g.dart
 
 unused:
-	./flutterw pub run dart_code_metrics:metrics check-unused-files lib
-	./flutterw pub run dart_code_metrics:metrics check-unused-code lib
-
-fmt:
-	./flutterw pub run import_sorter:main
+	flutter pub run dart_code_metrics:metrics check-unused-files lib
+	flutter pub run dart_code_metrics:metrics check-unused-code lib
 
 lint:
-	./flutterw analyze
-	./flutterw pub run dart_code_metrics:metrics lib
+	flutter analyze
+	flutter pub run dart_code_metrics:metrics lib
 
 build_env:
-	./flutterw scripts/setup_env.dart gen
+	flutter scripts/setup_env.dart gen
 
 build_runner:
-	./flutterw packages pub run build_runner build --delete-conflicting-outputs
+	flutter packages pub run build_runner build --delete-conflicting-outputs
 
 test:
-	./flutterw test
+	flutter test
 
 version:
 	./scripts/version.sh
 
 bump_dart_git:
-	./flutterw packages upgrade dart_git
+	flutter packages upgrade dart_git
 
 # https://stackoverflow.com/a/26339924/147435
 .PHONY: list test protos

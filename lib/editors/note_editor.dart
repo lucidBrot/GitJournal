@@ -6,31 +6,29 @@
 
 import 'dart:async';
 
+import 'package:dart_git/plumbing/git_hash.dart';
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'package:easy_localization/easy_localization.dart';
-import 'package:fast_immutable_collections/fast_immutable_collections.dart';
-import 'package:path/path.dart' as p;
-import 'package:provider/provider.dart';
-
+import 'package:function_types/function_types.dart';
 import 'package:gitjournal/core/folder/notes_folder.dart';
 import 'package:gitjournal/core/folder/notes_folder_fs.dart';
 import 'package:gitjournal/core/image.dart' as core;
 import 'package:gitjournal/core/markdown/md_yaml_doc.dart';
 import 'package:gitjournal/core/note.dart';
 import 'package:gitjournal/core/note_storage.dart';
+import 'package:gitjournal/core/notes/note.dart';
 import 'package:gitjournal/core/views/inline_tags_view.dart';
 import 'package:gitjournal/editors/checklist_editor.dart';
 import 'package:gitjournal/editors/common.dart';
 import 'package:gitjournal/editors/common_types.dart';
 import 'package:gitjournal/editors/journal_editor.dart';
 import 'package:gitjournal/editors/markdown_editor.dart';
-import 'package:gitjournal/editors/note_editor_selector.dart';
+import 'package:gitjournal/editors/note_editor_selection_dialog.dart';
 import 'package:gitjournal/editors/org_editor.dart';
 import 'package:gitjournal/editors/raw_editor.dart';
 import 'package:gitjournal/error_reporting.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/repository.dart';
 import 'package:gitjournal/settings/settings.dart';
@@ -40,6 +38,10 @@ import 'package:gitjournal/widgets/folder_selection_dialog.dart';
 import 'package:gitjournal/widgets/note_delete_dialog.dart';
 import 'package:gitjournal/widgets/note_tag_editor.dart';
 import 'package:gitjournal/widgets/rename_dialog.dart';
+import 'package:path/path.dart' as p;
+import 'package:provider/provider.dart';
+import 'package:synchronized/synchronized.dart';
+import 'package:universal_io/io.dart' as io;
 
 class ShowUndoSnackbar {}
 
@@ -131,12 +133,15 @@ class NoteEditorState extends State<NoteEditor>
   bool _newNoteRenamed = false;
   late EditorType _editorType;
   MdYamlDoc _originalNoteData = MdYamlDoc();
+  GitHash? _originalNoteOid;
 
   final _rawEditorKey = GlobalKey<RawEditorState>();
   final _markdownEditorKey = GlobalKey<MarkdownEditorState>();
   final _checklistEditorKey = GlobalKey<ChecklistEditorState>();
   final _journalEditorKey = GlobalKey<JournalEditorState>();
   final _orgEditorKey = GlobalKey<OrgEditorState>();
+
+  final _lock = Lock();
 
   NoteEditorState.newNote(
     NotesFolderFS folder,
@@ -184,10 +189,11 @@ class NoteEditorState extends State<NoteEditor>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
 
     if (widget.existingNote != null) {
       var existingNote = widget.existingNote!;
+      _originalNoteOid = existingNote.oid;
       _note = existingNote.resetOid();
       _originalNoteData = _note.data;
 
@@ -219,7 +225,7 @@ class NoteEditorState extends State<NoteEditor>
 
   @override
   void dispose() {
-    var _ = WidgetsBinding.instance!.removeObserver(this);
+    var _ = WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -320,7 +326,7 @@ class NoteEditorState extends State<NoteEditor>
     var newEditorType = await showDialog<EditorType>(
       context: context,
       builder: (BuildContext context) {
-        return NoteEditorSelector(_editorType, note.fileFormat);
+        return NoteEditorSelectionDialog(_editorType, note.fileFormat);
       },
     );
 
@@ -332,8 +338,20 @@ class NoteEditorState extends State<NoteEditor>
     }
   }
 
+  void _lockAndCall(Func1<Note, Future<void>> fn, Note note) {
+    if (_lock.locked) {
+      Log.w("UI Locked");
+      return;
+    }
+    unawaited(_lock.synchronized(() {
+      fn(note);
+    }));
+  }
+
   @override
-  Future<void> exitEditorSelected(Note note) async {
+  void exitEditorSelected(Note note) => _lockAndCall(_exitEditorSelected, note);
+
+  Future<void> _exitEditorSelected(Note note) async {
     assert(note.oid.isEmpty);
 
     var saved = await _saveNote(note);
@@ -343,7 +361,9 @@ class NoteEditorState extends State<NoteEditor>
   }
 
   @override
-  Future<void> renameNote(Note note) async {
+  void renameNote(Note note) => _lockAndCall(_renameNote, note);
+
+  Future<void> _renameNote(Note note) async {
     assert(note.oid.isEmpty);
 
     if (_isNewNote && !_newNoteRenamed) {
@@ -358,8 +378,8 @@ class NoteEditorState extends State<NoteEditor>
       context: context,
       builder: (_) => RenameDialog(
         oldPath: note.fileName,
-        inputDecoration: tr(LocaleKeys.widgets_NoteEditor_fileName),
-        dialogTitle: tr(LocaleKeys.widgets_NoteEditor_renameFile),
+        inputDecoration: context.loc.widgetsNoteEditorFileName,
+        dialogTitle: context.loc.widgetsNoteEditorRenameFile,
       ),
     );
     if (dialogResponse is! String) {
@@ -380,8 +400,8 @@ class NoteEditorState extends State<NoteEditor>
       if (renameResult.isFailure) {
         await showAlertDialog(
           context,
-          tr(LocaleKeys.editors_common_saveNoteFailed_title),
-          tr(LocaleKeys.editors_common_saveNoteFailed_message),
+          context.loc.editorsCommonSaveNoteFailedTitle,
+          context.loc.editorsCommonSaveNoteFailedMessage,
         );
       }
       if (!mounted) return;
@@ -411,19 +431,20 @@ class NoteEditorState extends State<NoteEditor>
         var _ = config.allowedFileExts.add(newExt);
         config.save();
 
-        var ext = newExt.isNotEmpty
-            ? newExt
-            : LocaleKeys.settings_fileTypes_noExt.tr();
+        var ext =
+            newExt.isNotEmpty ? newExt : context.loc.settingsFileTypesNoExt;
         showSnackbar(
           context,
-          LocaleKeys.widgets_NoteEditor_addType.tr(args: [ext]),
+          context.loc.widgetsNoteEditorAddType(ext),
         );
       }
     }
   }
 
   @override
-  Future<void> deleteNote(Note note) async {
+  void deleteNote(Note note) => _lockAndCall(_deleteNote, note);
+
+  Future<void> _deleteNote(Note note) async {
     assert(note.oid.isEmpty);
 
     if (_isNewNote && !_noteModified(note)) {
@@ -435,13 +456,18 @@ class NoteEditorState extends State<NoteEditor>
     bool shouldDelete = true;
     if (settings.confirmDelete) {
       shouldDelete = await showDialog(
-        context: context,
-        builder: (context) => const NoteDeleteDialog(num: 1),
-      );
+            context: context,
+            builder: (context) => const NoteDeleteDialog(num: 1),
+          ) ??
+          false;
     }
     if (shouldDelete == true) {
       if (!_isNewNote) {
         var stateContainer = context.read<GitJournalRepo>();
+        if (_originalNoteOid != null) {
+          //can't delete with blank oid, so get a note with original oid
+          note = note.copyWith(file: note.file.copyFile(oid: _originalNoteOid));
+        }
         stateContainer.removeNote(note);
       }
 
@@ -493,6 +519,17 @@ class NoteEditorState extends State<NoteEditor>
       if (_isNewNote && !_newNoteRenamed) {
         if (note.shouldRebuildPath) {
           Log.d("Rebuilding Note's FileName");
+
+          // It's a new note, but the file might already be saved to disk during didChangeAppLifecycleState
+          // if the user switched to another app and then returned before saving.
+          // If that's the case, deleting the existing file will avoid saving 2 files.
+          var filePath = note.fullFilePath;
+          final file = io.File(filePath);
+          if (file.existsSync()) {
+            Log.d("Deleting existing file for new note");
+            file.deleteSync();
+          }
+
           note = note.copyWithFileName(note.rebuildFileName());
           setState(() {
             _note = note;
@@ -514,8 +551,8 @@ class NoteEditorState extends State<NoteEditor>
 
       await showAlertDialog(
         context,
-        tr(LocaleKeys.editors_common_saveNoteFailed_title),
-        tr(LocaleKeys.editors_common_saveNoteFailed_message),
+        context.loc.editorsCommonSaveNoteFailedTitle,
+        context.loc.editorsCommonSaveNoteFailedMessage,
       );
       return false;
     }
@@ -541,7 +578,10 @@ class NoteEditorState extends State<NoteEditor>
   Note? _getNoteFromEditor() => _getEditorState()?.getNote();
 
   @override
-  Future<void> moveNoteToFolderSelected(Note note) async {
+  void moveNoteToFolderSelected(Note note) =>
+      _lockAndCall(_moveNoteToFolderSelected, note);
+
+  Future<void> _moveNoteToFolderSelected(Note note) async {
     assert(note.oid.isEmpty);
 
     var destFolder = await showDialog<NotesFolderFS>(
@@ -569,7 +609,9 @@ class NoteEditorState extends State<NoteEditor>
   }
 
   @override
-  Future<void> discardChanges(Note note) async {
+  void discardChanges(Note note) => _lockAndCall(_discardChanges, note);
+
+  Future<void> _discardChanges(Note note) async {
     assert(note.oid.isEmpty);
 
     if (!_isNewNote) {
@@ -581,7 +623,9 @@ class NoteEditorState extends State<NoteEditor>
   }
 
   @override
-  Future<void> editTags(Note note) async {
+  void editTags(Note note) => _lockAndCall(_editTags, note);
+
+  Future<void> _editTags(Note note) async {
     assert(note.oid.isEmpty);
 
     final rootFolder = Provider.of<NotesFolderFS>(context, listen: false);

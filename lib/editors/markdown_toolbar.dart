@@ -21,14 +21,14 @@ class MarkdownToolBar extends StatelessWidget {
   final TextEditingController textController;
 
   const MarkdownToolBar({
-    Key? key,
+    super.key,
     required this.textController,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     var textTheme = Theme.of(context).textTheme;
-    var style = textTheme.bodyText2!.copyWith(fontWeight: FontWeight.bold);
+    var style = textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold);
 
     var scroll = SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -60,7 +60,7 @@ class MarkdownToolBar extends StatelessWidget {
             onPressed: () => _modifyCurrentLine('1. '),
           ),
           fork.IconButton(
-            icon: const FaIcon(FontAwesomeIcons.tasks),
+            icon: const FaIcon(FontAwesomeIcons.listCheck),
             padding: const EdgeInsets.all(0.0),
             onPressed: () => _modifyCurrentLine('- [ ] '),
           ),

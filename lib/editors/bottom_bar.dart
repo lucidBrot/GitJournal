@@ -6,19 +6,15 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'package:easy_localization/easy_localization.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:function_types/function_types.dart';
-import 'package:image_picker/image_picker.dart';
-
 import 'package:gitjournal/core/folder/notes_folder_fs.dart';
 import 'package:gitjournal/editors/common.dart';
 import 'package:gitjournal/error_reporting.dart';
-import 'package:gitjournal/features.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/utils/utils.dart';
 import 'package:gitjournal/widgets/pro_overlay.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditorBottomBar extends StatelessWidget {
   final Editor editor;
@@ -39,7 +35,7 @@ class EditorBottomBar extends StatelessWidget {
   final bool findAllowed;
 
   const EditorBottomBar({
-    Key? key,
+    super.key,
     required this.editor,
     required this.editorState,
     required this.parentFolder,
@@ -53,7 +49,7 @@ class EditorBottomBar extends StatelessWidget {
     required this.redoAllowed,
     required this.onFindSelected,
     required this.findAllowed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -94,24 +90,25 @@ class EditorBottomBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             _Visibility(
-              child: addIcon,
               visible: allowEdits,
+              child: addIcon,
             ),
             const Spacer(),
             _Visibility(
+              visible: undoAllowed,
               child: IconButton(
                 icon: const Icon(Icons.undo),
                 onPressed: undoAllowed ? onUndoSelected : null,
               ),
-              visible: undoAllowed,
             ),
             TextButton.icon(
               icon: const Icon(Icons.folder),
               label: Text(
-                parentFolder.publicName,
-                style: theme.textTheme.bodyText2,
+                parentFolder.publicName(context),
+                style: theme.textTheme.bodyMedium,
               ),
               onPressed: () {
                 var note = editorState.getNote();
@@ -119,17 +116,16 @@ class EditorBottomBar extends StatelessWidget {
               },
             ),
             _Visibility(
+              visible: redoAllowed,
               child: IconButton(
                 icon: const Icon(Icons.redo),
                 onPressed: redoAllowed ? onRedoSelected : null,
               ),
-              visible: redoAllowed,
             ),
             const Spacer(),
             // Remove Material when https://github.com/flutter/flutter/issues/30658 is fixed
             Material(child: menuIcon),
           ],
-          mainAxisAlignment: MainAxisAlignment.center,
         ),
       ),
     );
@@ -140,8 +136,7 @@ class AddBottomSheet extends StatelessWidget {
   final Editor editor;
   final EditorState editorState;
 
-  const AddBottomSheet(this.editor, this.editorState, {Key? key})
-      : super(key: key);
+  const AddBottomSheet(this.editor, this.editorState, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +145,7 @@ class AddBottomSheet extends StatelessWidget {
       children: <Widget>[
         ListTile(
           leading: const Icon(Icons.camera),
-          title: Text(tr(LocaleKeys.editors_common_takePhoto)),
+          title: Text(context.loc.editorsCommonTakePhoto),
           onTap: () async {
             try {
               var image = await ImagePicker().pickImage(
@@ -168,7 +163,7 @@ class AddBottomSheet extends StatelessWidget {
         ),
         ListTile(
           leading: const Icon(Icons.image),
-          title: Text(tr(LocaleKeys.editors_common_addImage)),
+          title: Text(context.loc.editorsCommonAddImage),
           onTap: () async {
             try {
               var image = await ImagePicker().pickImage(
@@ -204,7 +199,7 @@ class BottomMenuSheet extends StatelessWidget {
   final Func0<void> onFindSelected;
 
   const BottomMenuSheet({
-    Key? key,
+    super.key,
     required this.editor,
     required this.editorState,
     required this.zenModeEnabled,
@@ -212,7 +207,7 @@ class BottomMenuSheet extends StatelessWidget {
     required this.metaDataEditable,
     required this.onFindSelected,
     required this.findAllowed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +216,7 @@ class BottomMenuSheet extends StatelessWidget {
       children: <Widget>[
         ListTile(
           leading: const Icon(Icons.undo),
-          title: Text(tr(LocaleKeys.editors_common_discard)),
+          title: Text(context.loc.editorsCommonDiscard),
           onTap: () {
             var note = editorState.getNote();
             Navigator.of(context).pop();
@@ -232,7 +227,7 @@ class BottomMenuSheet extends StatelessWidget {
         ),
         ListTile(
           leading: const Icon(Icons.share),
-          title: Text(tr(LocaleKeys.editors_common_share)),
+          title: Text(context.loc.editorsCommonShare),
           onTap: () {
             var note = editorState.getNote();
             Navigator.of(context).pop();
@@ -242,10 +237,9 @@ class BottomMenuSheet extends StatelessWidget {
         ),
         if (metaDataEditable)
           ProOverlay(
-            feature: Feature.tags,
             child: ListTile(
               leading: const FaIcon(FontAwesomeIcons.tag),
-              title: Text(tr(LocaleKeys.editors_common_tags)),
+              title: Text(context.loc.editorsCommonTags),
               onTap: () {
                 var note = editorState.getNote();
                 Navigator.of(context).pop();
@@ -257,7 +251,7 @@ class BottomMenuSheet extends StatelessWidget {
         ListTile(
           key: const ValueKey('EditFileNameButton'),
           leading: const Icon(Icons.edit),
-          title: Text(tr(LocaleKeys.editors_common_editFileName)),
+          title: Text(context.loc.editorsCommonEditFileName),
           onTap: () {
             var note = editorState.getNote();
             Navigator.of(context).pop();
@@ -266,12 +260,11 @@ class BottomMenuSheet extends StatelessWidget {
           },
         ),
         ProOverlay(
-          feature: Feature.zenMode,
           child: ListTile(
             leading: const FaIcon(FontAwesomeIcons.peace),
-            title: Text(tr(zenModeEnabled
-                ? LocaleKeys.editors_common_zen_disable
-                : LocaleKeys.editors_common_zen_enable)),
+            title: Text(zenModeEnabled
+                ? context.loc.editorsCommonZenDisable
+                : context.loc.editorsCommonZenEnable),
             onTap: () {
               zenModeChanged();
               Navigator.of(context).pop();
@@ -281,7 +274,7 @@ class BottomMenuSheet extends StatelessWidget {
         if (findAllowed)
           ListTile(
             leading: const Icon(Icons.search),
-            title: Text(tr(LocaleKeys.editors_common_find)),
+            title: Text(context.loc.editorsCommonFind),
             onTap: () {
               Navigator.of(context).pop();
               onFindSelected();
@@ -296,22 +289,19 @@ class _Visibility extends StatelessWidget {
   final Widget child;
   final bool visible;
 
-  const _Visibility({
-    required this.child,
-    required this.visible,
-    Key? key,
-  }) : super(key: key);
+  const _Visibility({required this.child, required this.visible});
 
   @override
   Widget build(BuildContext context) {
     return Visibility(
       // Remove Material when https://github.com/flutter/flutter/issues/30658 is fixed
-      child: Material(child: child),
       visible: visible,
       maintainSize: true,
       maintainAnimation: true,
       maintainState: true,
       maintainInteractivity: false,
+      // Remove Material when https://github.com/flutter/flutter/issues/30658 is fixed
+      child: Material(child: child),
     );
   }
 }

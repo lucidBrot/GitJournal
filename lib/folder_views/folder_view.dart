@@ -4,13 +4,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import 'package:flutter/foundation.dart' as foundation;
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
 import 'package:git_bindings/git_bindings.dart';
-import 'package:provider/provider.dart';
-
 import 'package:gitjournal/analytics/analytics.dart';
 import 'package:gitjournal/app_router.dart';
 import 'package:gitjournal/core/folder/filtered_notes_folder.dart';
@@ -23,11 +18,12 @@ import 'package:gitjournal/core/note.dart';
 import 'package:gitjournal/editors/common_types.dart';
 import 'package:gitjournal/editors/note_editor.dart';
 import 'package:gitjournal/folder_views/common.dart';
+import 'package:gitjournal/folder_views/folder_view_configuration_dialog.dart';
+import 'package:gitjournal/folder_views/folder_view_selection_dialog.dart';
 import 'package:gitjournal/folder_views/standard_view.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/repository.dart';
 import 'package:gitjournal/settings/settings.dart';
-import 'package:gitjournal/settings/widgets/settings_header.dart';
 import 'package:gitjournal/utils/utils.dart';
 import 'package:gitjournal/widgets/app_bar_menu_button.dart';
 import 'package:gitjournal/widgets/app_drawer.dart';
@@ -35,8 +31,10 @@ import 'package:gitjournal/widgets/folder_selection_dialog.dart';
 import 'package:gitjournal/widgets/new_note_nav_bar.dart';
 import 'package:gitjournal/widgets/note_delete_dialog.dart';
 import 'package:gitjournal/widgets/note_search_delegate.dart';
-import 'package:gitjournal/widgets/sorting_mode_selector.dart';
+import 'package:gitjournal/widgets/sorting_mode_selection_dialog.dart';
 import 'package:gitjournal/widgets/sync_button.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 enum DropDownChoices {
   SortingOptions,
@@ -74,7 +72,8 @@ class _FolderViewState extends State<FolderView> {
   @override
   void initState() {
     super.initState();
-    _init();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _init());
   }
 
   Future<void> _init() async {
@@ -85,7 +84,7 @@ class _FolderViewState extends State<FolderView> {
     var otherNotesFolder = SortedNotesFolder(
       folder: await FilteredNotesFolder.load(
         widget.notesFolder,
-        title: LocaleKeys.widgets_FolderView_pinned,
+        title: context.loc.widgetsFolderViewPinned,
         filter: (Note note) async => !note.pinned,
       ),
       sortingMode: widget.notesFolder.config.sortingMode,
@@ -94,7 +93,7 @@ class _FolderViewState extends State<FolderView> {
     var pinnedFolder = SortedNotesFolder(
       folder: await FilteredNotesFolder.load(
         widget.notesFolder,
-        title: LocaleKeys.widgets_FolderView_pinned,
+        title: context.loc.widgetsFolderViewPinned,
         filter: (Note note) async => note.pinned,
       ),
       sortingMode: widget.notesFolder.config.sortingMode,
@@ -127,7 +126,7 @@ class _FolderViewState extends State<FolderView> {
     if (_sortedNotesFolder == null) {
       return Container();
     }
-    var title = widget.notesFolder.publicName;
+    var title = widget.notesFolder.publicName(context);
     if (inSelectionMode) {
       title = NumberFormat.compact().format(_selectedNotes.length);
     }
@@ -135,7 +134,7 @@ class _FolderViewState extends State<FolderView> {
     var folderView = buildFolderView(
       viewType: _viewType,
       folder: _sortedNotesFolder!,
-      emptyText: tr(LocaleKeys.screens_folder_view_empty),
+      emptyText: context.loc.screensFolderViewEmpty,
       header: _headerType,
       showSummary: _showSummary,
       noteTapped: _noteTapped,
@@ -199,10 +198,10 @@ class _FolderViewState extends State<FolderView> {
           child: Builder(builder: (context) {
             var view = CustomScrollView(slivers: [
               if (havePinnedNotes)
-                _SliverHeader(text: LocaleKeys.widgets_FolderView_pinned.tr()),
+                _SliverHeader(text: context.loc.widgetsFolderViewPinned),
               if (havePinnedNotes) pinnedFolderView,
               if (havePinnedNotes)
-                _SliverHeader(text: LocaleKeys.widgets_FolderView_others.tr()),
+                _SliverHeader(text: context.loc.widgetsFolderViewOthers),
               folderView,
             ]);
             if (settings.remoteSyncFrequency == RemoteSyncFrequency.Manual) {
@@ -293,8 +292,7 @@ class _FolderViewState extends State<FolderView> {
         if (!isVirtualFolder) {
           showSnackbar(
             context,
-            LocaleKeys.settings_editors_journalDefaultFolderSelect
-                .tr(args: [spec]),
+            context.loc.settingsEditorsJournalDefaultFolderSelect(spec),
           );
         }
       }
@@ -344,7 +342,7 @@ class _FolderViewState extends State<FolderView> {
     var newSortingMode = await showDialog<SortingMode>(
       context: context,
       builder: (BuildContext context) =>
-          SortingModeSelector(_sortedNotesFolder!.sortingMode),
+          SortingModeSelectionDialog(_sortedNotesFolder!.sortingMode),
     );
 
     if (newSortingMode != null) {
@@ -362,153 +360,51 @@ class _FolderViewState extends State<FolderView> {
   Future<void> _configureViewButtonPressed() async {
     var _ = await showDialog<SortingMode>(
       context: context,
-      builder: (BuildContext context) {
-        void headerTypeChanged(StandardViewHeader? newHeader) {
-          if (newHeader == null) {
-            return;
-          }
-          setState(() {
-            _headerType = newHeader;
-          });
-
-          var folderConfig = _sortedNotesFolder!.config;
-          folderConfig.viewHeader = _headerType;
-          folderConfig.save();
-        }
-
-        void summaryChanged(bool newVal) {
-          setState(() {
-            _showSummary = newVal;
-          });
-
-          var folderConfig = _sortedNotesFolder!.config;
-          folderConfig.showNoteSummary = newVal;
-          folderConfig.save();
-        }
-
-        return StatefulBuilder(
-          builder: (BuildContext context, setState) {
-            var children = <Widget>[
-              SettingsHeader(
-                  tr(LocaleKeys.widgets_FolderView_headerOptions_heading)),
-              RadioListTile<StandardViewHeader>(
-                title: Text(tr(
-                    LocaleKeys.widgets_FolderView_headerOptions_titleFileName)),
-                value: StandardViewHeader.TitleOrFileName,
-                groupValue: _headerType,
-                onChanged: (newVal) {
-                  headerTypeChanged(newVal);
-                  setState(() {});
-                },
-              ),
-              RadioListTile<StandardViewHeader>(
-                title:
-                    Text(tr(LocaleKeys.widgets_FolderView_headerOptions_auto)),
-                value: StandardViewHeader.TitleGenerated,
-                groupValue: _headerType,
-                onChanged: (newVal) {
-                  headerTypeChanged(newVal);
-                  setState(() {});
-                },
-              ),
-              RadioListTile<StandardViewHeader>(
-                key: const ValueKey("ShowFileNameOnly"),
-                title: Text(
-                    tr(LocaleKeys.widgets_FolderView_headerOptions_fileName)),
-                value: StandardViewHeader.FileName,
-                groupValue: _headerType,
-                onChanged: (newVal) {
-                  headerTypeChanged(newVal);
-                  setState(() {});
-                },
-              ),
-              SwitchListTile(
-                key: const ValueKey("SummaryToggle"),
-                title: Text(
-                    tr(LocaleKeys.widgets_FolderView_headerOptions_summary)),
-                value: _showSummary,
-                onChanged: (bool newVal) {
-                  setState(() {
-                    _showSummary = newVal;
-                  });
-                  summaryChanged(newVal);
-                },
-              ),
-            ];
-
-            return AlertDialog(
-              title: GestureDetector(
-                key: const ValueKey("Hack_Back"),
-                child: Text(
-                    tr(LocaleKeys.widgets_FolderView_headerOptions_customize)),
-                onTap: () {
-                  // Hack to get out of the dialog in the tests
-                  // driver.findByType('ModalBarrier') doesn't seem to be working
-                  if (foundation.kDebugMode) {
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
-              key: const ValueKey("ViewOptionsDialog"),
-              content: Column(
-                children: children,
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-              ),
-            );
-          },
-        );
-      },
+      builder: _viewDialog,
     );
 
     setState(() {});
   }
 
-  Future<void> _folderViewChooserSelected() async {
-    void onViewChange(FolderViewType? vt) => Navigator.of(context).pop(vt);
+  Widget _viewDialog(BuildContext context) {
+    void headerTypeChanged(StandardViewHeader? newHeader) {
+      if (newHeader == null) {
+        return;
+      }
+      setState(() {
+        _headerType = newHeader;
+      });
 
+      var folderConfig = _sortedNotesFolder!.config;
+      folderConfig.viewHeader = _headerType;
+      folderConfig.save();
+    }
+
+    void summaryChanged(bool newVal) {
+      setState(() {
+        _showSummary = newVal;
+      });
+
+      var folderConfig = _sortedNotesFolder!.config;
+      folderConfig.showNoteSummary = newVal;
+      folderConfig.save();
+    }
+
+    return FolderViewConfigurationDialog(
+      headerType: _headerType,
+      showSummary: _showSummary,
+      onHeaderTypeChanged: headerTypeChanged,
+      onShowSummaryChanged: summaryChanged,
+    );
+  }
+
+  Future<void> _folderViewChooserSelected() async {
     var newViewType = await showDialog<FolderViewType>(
       context: context,
       builder: (BuildContext context) {
-        var children = <Widget>[
-          RadioListTile<FolderViewType>(
-            title: Text(tr(LocaleKeys.widgets_FolderView_views_standard)),
-            value: FolderViewType.Standard,
-            groupValue: _viewType,
-            onChanged: onViewChange,
-          ),
-          RadioListTile<FolderViewType>(
-            title: Text(tr(LocaleKeys.widgets_FolderView_views_journal)),
-            value: FolderViewType.Journal,
-            groupValue: _viewType,
-            onChanged: onViewChange,
-          ),
-          RadioListTile<FolderViewType>(
-            title: Text(tr(LocaleKeys.widgets_FolderView_views_grid)),
-            value: FolderViewType.Grid,
-            groupValue: _viewType,
-            onChanged: onViewChange,
-          ),
-          RadioListTile<FolderViewType>(
-            title: Text(tr(LocaleKeys.widgets_FolderView_views_card)),
-            value: FolderViewType.Card,
-            groupValue: _viewType,
-            onChanged: onViewChange,
-          ),
-          // RadioListTile<FolderViewType>(
-          //   title: Text(tr(LocaleKeys.widgets_FolderView_views_calendar)),
-          //   value: FolderViewType.Calendar,
-          //   groupValue: _viewType,
-          //   onChanged: onViewChange,
-          // ),
-        ];
-
-        return AlertDialog(
-          title: Text(tr(LocaleKeys.widgets_FolderView_views_select)),
-          content: Column(
-            children: children,
-            mainAxisSize: MainAxisSize.min,
-          ),
+        return FolderViewSelectionDialog(
+          viewType: _viewType,
+          onViewChange: (vt) => Navigator.of(context).pop(vt),
         );
       },
     );
@@ -545,13 +441,13 @@ class _FolderViewState extends State<FolderView> {
         PopupMenuItem<DropDownChoices>(
           key: const ValueKey("SortingOptions"),
           value: DropDownChoices.SortingOptions,
-          child: Text(tr(LocaleKeys.widgets_FolderView_sortingOptions)),
+          child: Text(context.loc.widgetsFolderViewSortingOptions),
         ),
         if (_viewType == FolderViewType.Standard)
           PopupMenuItem<DropDownChoices>(
             key: const ValueKey("ViewOptions"),
             value: DropDownChoices.ViewOptions,
-            child: Text(tr(LocaleKeys.widgets_FolderView_viewOptions)),
+            child: Text(context.loc.widgetsFolderViewViewOptions),
           ),
       ],
     );
@@ -594,7 +490,7 @@ class _FolderViewState extends State<FolderView> {
           <PopupMenuEntry<NoteSelectedExtraActions>>[
         PopupMenuItem<NoteSelectedExtraActions>(
           value: NoteSelectedExtraActions.MoveToFolder,
-          child: Text(tr(LocaleKeys.widgets_FolderView_actions_moveToFolder)),
+          child: Text(context.loc.widgetsFolderViewActionsMoveToFolder),
         ),
       ],
     );
@@ -657,7 +553,7 @@ class _FolderViewState extends State<FolderView> {
 
 class _SliverHeader extends StatelessWidget {
   final String text;
-  const _SliverHeader({Key? key, required this.text}) : super(key: key);
+  const _SliverHeader({required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -666,7 +562,7 @@ class _SliverHeader extends StatelessWidget {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-        child: Text(text, style: textTheme.subtitle2),
+        child: Text(text, style: textTheme.titleSmall),
       ),
     );
   }
@@ -679,7 +575,7 @@ Future<void> syncRepo(BuildContext context) async {
   } on GitException catch (e) {
     showErrorMessageSnackbar(
       context,
-      tr(LocaleKeys.widgets_FolderView_syncError, args: [e.cause]),
+      context.loc.widgetsFolderViewSyncError(e.cause),
     );
   } catch (e) {
     showErrorSnackbar(context, e);

@@ -5,10 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 
 class NoteTitleEditor extends StatelessWidget {
   final TextEditingController textController;
@@ -19,13 +16,13 @@ class NoteTitleEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
-    var style = theme.textTheme.headline6;
+    var style = theme.textTheme.titleLarge;
 
     return TextField(
       keyboardType: TextInputType.text,
       style: style,
       decoration: InputDecoration(
-        hintText: tr(LocaleKeys.editors_common_defaultTitleHint),
+        hintText: context.loc.editorsCommonDefaultTitleHint,
         border: InputBorder.none,
         fillColor: theme.scaffoldBackgroundColor,
         hoverColor: theme.scaffoldBackgroundColor,

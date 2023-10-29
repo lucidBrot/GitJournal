@@ -9,15 +9,17 @@ import 'package:flutter/material.dart';
 // FIXME: Why are you scrollable!!
 class EmptyTextSliver extends StatelessWidget {
   const EmptyTextSliver({
-    Key? key,
+    super.key,
     required this.emptyText,
-  }) : super(key: key);
+  });
 
   final String emptyText;
 
   @override
   Widget build(BuildContext context) {
     return SliverFillRemaining(
+      hasScrollBody: false,
+      fillOverscroll: false,
       child: Center(
         child: Text(
           emptyText,
@@ -29,8 +31,6 @@ class EmptyTextSliver extends StatelessWidget {
           ),
         ),
       ),
-      hasScrollBody: false,
-      fillOverscroll: false,
     );
   }
 }

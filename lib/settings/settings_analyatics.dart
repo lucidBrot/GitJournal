@@ -5,19 +5,16 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-
 import 'package:gitjournal/analytics/analytics.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/settings/app_config.dart';
+import 'package:provider/provider.dart';
 
 class SettingsAnalytics extends StatelessWidget {
   static const routePath = '/settings/analytics';
 
-  const SettingsAnalytics({Key? key}) : super(key: key);
+  const SettingsAnalytics({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +27,7 @@ class SettingsAnalytics extends StatelessWidget {
         const Divider(),
         const _AnalyticsSwitchListTile(),
         SwitchListTile(
-          title: Text(tr(LocaleKeys.settings_crashReports)),
+          title: Text(context.loc.settingsCrashReports),
           value: appConfig.collectCrashReports,
           onChanged: (bool val) {
             appConfig.collectCrashReports = val;
@@ -47,7 +44,7 @@ class SettingsAnalytics extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(LocaleKeys.settings_list_analytics_title.tr()),
+        title: Text(context.loc.settingsListAnalyticsTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -61,9 +58,7 @@ class SettingsAnalytics extends StatelessWidget {
 }
 
 class _AnalyticsSwitchListTile extends StatefulWidget {
-  const _AnalyticsSwitchListTile({
-    Key? key,
-  }) : super(key: key);
+  const _AnalyticsSwitchListTile();
 
   @override
   State<_AnalyticsSwitchListTile> createState() =>
@@ -79,7 +74,7 @@ class _AnalyticsSwitchListTileState extends State<_AnalyticsSwitchListTile> {
     var analytics = Analytics.instance!;
 
     return SwitchListTile(
-      title: Text(tr(LocaleKeys.settings_usageStats)),
+      title: Text(context.loc.settingsUsageStats),
       value: analytics.enabled,
       onChanged: (bool val) {
         analytics.enabled = val;

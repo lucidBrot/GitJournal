@@ -7,18 +7,15 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:function_types/function_types.dart';
-import 'package:provider/provider.dart';
-import 'package:time/time.dart';
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/repository.dart';
 import 'package:gitjournal/repository_manager.dart';
 import 'package:gitjournal/settings/app_config.dart';
 import 'package:gitjournal/settings/settings.dart';
+import 'package:provider/provider.dart';
+import 'package:time/time.dart';
 
 class AppDrawerHeader extends StatelessWidget {
   final Func0<void> repoListToggled;
@@ -32,6 +29,8 @@ class AppDrawerHeader extends StatelessWidget {
     var appConfig = Provider.of<AppConfig>(context);
 
     var top = Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         const DecoratedBox(
           decoration: BoxDecoration(
@@ -46,8 +45,6 @@ class AppDrawerHeader extends StatelessWidget {
           child: ThemeSwitcherButton(),
         ),
       ],
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
     );
 
     var currentRepo = _CurrentRepo(
@@ -61,12 +58,12 @@ class AppDrawerHeader extends StatelessWidget {
       ),
       padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           top,
           currentRepo,
         ],
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
       ),
     );
 
@@ -76,7 +73,7 @@ class AppDrawerHeader extends StatelessWidget {
 
     var isDesktop = Platform.isLinux || Platform.isWindows || Platform.isMacOS;
     return Banner(
-      message: isDesktop ? tr(LocaleKeys.beta) : tr(LocaleKeys.pro),
+      message: isDesktop ? context.loc.beta : context.loc.pro,
       location: BannerLocation.topStart,
       color: Theme.of(context).colorScheme.secondary,
       child: header,
@@ -86,9 +83,8 @@ class AppDrawerHeader extends StatelessWidget {
 
 class _CurrentRepo extends StatefulWidget {
   const _CurrentRepo({
-    Key? key,
     required this.repoListToggled,
-  }) : super(key: key);
+  });
 
   final Func0<void> repoListToggled;
 
@@ -98,7 +94,7 @@ class _CurrentRepo extends StatefulWidget {
 
 class __CurrentRepoState extends State<_CurrentRepo>
     with SingleTickerProviderStateMixin {
-  late Animation _animation;
+  late Animation<double> _animation;
   late AnimationController _controller;
 
   var _gitRemoteUrl = "";
@@ -128,39 +124,39 @@ class __CurrentRepoState extends State<_CurrentRepo>
     var textTheme = Theme.of(context).textTheme;
 
     var w = Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Expanded(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(_repoFolderName, style: textTheme.headline6),
+              Text(_repoFolderName, style: textTheme.titleLarge),
               const SizedBox(height: 8.0),
               Text(
                 _gitRemoteUrl,
-                style: textTheme.subtitle2,
+                style: textTheme.titleSmall,
                 overflow: TextOverflow.clip,
                 maxLines: 1,
               ),
               const SizedBox(height: 8.0),
             ],
-            crossAxisAlignment: CrossAxisAlignment.start,
           ),
         ),
         RotationTransition(
-          turns: _animation as Animation<double>,
+          turns: _animation,
           child: IconButton(
             icon: const FaIcon(FontAwesomeIcons.angleDown),
             onPressed: _pressed,
           ),
         ),
       ],
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
     );
 
     return GestureDetector(
-      child: w,
       behavior: HitTestBehavior.opaque,
       onTap: _pressed,
+      child: w,
     );
   }
 
@@ -192,7 +188,7 @@ class __CurrentRepoState extends State<_CurrentRepo>
 
     if (remoteConfigs.isEmpty) {
       setState(() {
-        _gitRemoteUrl = tr(LocaleKeys.drawer_remote);
+        _gitRemoteUrl = context.loc.drawerRemote;
       });
       return;
     }

@@ -5,35 +5,29 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:launch_review/launch_review.dart';
-import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:time/time.dart';
-import 'package:universal_io/io.dart' show Platform;
-
+import 'package:git_setup/screens.dart';
 import 'package:gitjournal/account/login_screen.dart';
 import 'package:gitjournal/analytics/analytics.dart';
-import 'package:gitjournal/features.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
 import 'package:gitjournal/history/history_screen.dart';
 import 'package:gitjournal/iap/purchase_screen.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/repository_manager.dart';
 import 'package:gitjournal/screens/error_screen.dart';
 import 'package:gitjournal/screens/folder_listing.dart';
-import 'package:gitjournal/screens/graph_view.dart';
 import 'package:gitjournal/screens/home_screen.dart';
 import 'package:gitjournal/screens/tag_listing.dart';
 import 'package:gitjournal/settings/app_config.dart';
 import 'package:gitjournal/settings/bug_report.dart';
 import 'package:gitjournal/settings/settings_screen.dart';
-import 'package:gitjournal/setup/screens.dart';
 import 'package:gitjournal/widgets/app_drawer_header.dart';
 import 'package:gitjournal/widgets/pro_overlay.dart';
+import 'package:launch_review/launch_review.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:time/time.dart';
+import 'package:universal_io/io.dart' show Platform;
 
 class AppDrawer extends StatefulWidget {
   @override
@@ -72,7 +66,7 @@ class _AppDrawerState extends State<AppDrawer>
   }
 
   Widget _buildRepoList() {
-    var divider = Row(children: const <Widget>[Expanded(child: Divider())]);
+    var divider = const Row(children: <Widget>[Expanded(child: Divider())]);
     var repoManager = context.watch<RepositoryManager>();
     var repoIds = repoManager.repoIds;
 
@@ -81,11 +75,10 @@ class _AppDrawerState extends State<AppDrawer>
         const SizedBox(height: 8),
         for (var id in repoIds) RepoTile(id),
         ProOverlay(
-          feature: Feature.multiRepos,
           child: _buildDrawerTile(
             context,
             icon: Icons.add,
-            title: tr(LocaleKeys.drawer_addRepo),
+            title: context.loc.drawerAddRepo,
             onTap: () {
               var _ = repoManager.addRepoAndSwitch();
               Navigator.pop(context);
@@ -115,13 +108,13 @@ class _AppDrawerState extends State<AppDrawer>
     var repoManager = context.watch<RepositoryManager>();
     var repo = repoManager.currentRepo;
     var appConfig = context.watch<AppConfig>();
-    var textStyle = Theme.of(context).textTheme.bodyText1;
+    var textStyle = Theme.of(context).textTheme.bodyLarge;
     var currentRoute = ModalRoute.of(context)!.settings.name;
 
     if (repo?.remoteGitRepoConfigured == false) {
       setupGitButton = ListTile(
         leading: Icon(Icons.sync, color: textStyle!.color),
-        title: Text(tr(LocaleKeys.drawer_setup), style: textStyle),
+        title: Text(context.loc.drawerSetup, style: textStyle),
         trailing: const Icon(
           Icons.info,
           color: Colors.red,
@@ -135,8 +128,7 @@ class _AppDrawerState extends State<AppDrawer>
       );
     }
 
-    var divider = Row(children: const <Widget>[Expanded(child: Divider())]);
-    var user = Supabase.instance.client.auth.currentUser;
+    var divider = const Row(children: <Widget>[Expanded(child: Divider())]);
 
     return Drawer(
       child: ListView(
@@ -159,7 +151,7 @@ class _AppDrawerState extends State<AppDrawer>
             _buildDrawerTile(
               context,
               icon: Icons.power,
-              title: tr(LocaleKeys.drawer_pro),
+              title: context.loc.drawerPro,
               onTap: () {
                 Navigator.pop(context);
                 var _ = Navigator.pushNamed(context, PurchaseScreen.routePath);
@@ -170,11 +162,11 @@ class _AppDrawerState extends State<AppDrawer>
                 );
               },
             ),
-          if (appConfig.experimentalAccounts && user == null)
+          if (appConfig.experimentalAccounts)
             _buildDrawerTile(
               context,
               icon: Icons.account_circle,
-              title: tr(LocaleKeys.drawer_login),
+              title: context.loc.drawerLogin,
               onTap: () => _navTopLevel(context, LoginPage.routePath),
               selected: currentRoute == LoginPage.routePath,
             ),
@@ -183,7 +175,7 @@ class _AppDrawerState extends State<AppDrawer>
             _buildDrawerTile(
               context,
               icon: Icons.note,
-              title: tr(LocaleKeys.drawer_all),
+              title: context.loc.drawerAll,
               onTap: () => _navTopLevel(context, HomeScreen.routePath),
               selected: currentRoute == HomeScreen.routePath,
             ),
@@ -191,25 +183,16 @@ class _AppDrawerState extends State<AppDrawer>
             _buildDrawerTile(
               context,
               icon: Icons.folder,
-              title: tr(LocaleKeys.drawer_folders),
+              title: context.loc.drawerFolders,
               onTap: () => _navTopLevel(context, FolderListingScreen.routePath),
               selected: currentRoute == FolderListingScreen.routePath,
-            ),
-          if (appConfig.experimentalGraphView && repo != null)
-            _buildDrawerTile(
-              context,
-              icon: FontAwesomeIcons.projectDiagram,
-              isFontAwesome: true,
-              title: tr(LocaleKeys.drawer_graph),
-              onTap: () => _navTopLevel(context, GraphViewScreen.routePath),
-              selected: currentRoute == GraphViewScreen.routePath,
             ),
           if (appConfig.experimentalHistory && repo != null)
             _buildDrawerTile(
               context,
               icon: Icons.history,
               isFontAwesome: true,
-              title: tr(LocaleKeys.drawer_history),
+              title: context.loc.drawerHistory,
               onTap: () => _navTopLevel(context, HistoryScreen.routePath),
               selected: currentRoute == HistoryScreen.routePath,
             ),
@@ -218,7 +201,7 @@ class _AppDrawerState extends State<AppDrawer>
               context,
               icon: FontAwesomeIcons.tag,
               isFontAwesome: true,
-              title: tr(LocaleKeys.drawer_tags),
+              title: context.loc.drawerTags,
               onTap: () => _navTopLevel(context, TagListingScreen.routePath),
               selected: currentRoute == TagListingScreen.routePath,
             ),
@@ -226,7 +209,7 @@ class _AppDrawerState extends State<AppDrawer>
           _buildDrawerTile(
             context,
             icon: Icons.share,
-            title: tr(LocaleKeys.drawer_share),
+            title: context.loc.drawerShare,
             onTap: () {
               Navigator.pop(context);
               Share.share('Checkout GitJournal https://gitjournal.io/');
@@ -238,7 +221,7 @@ class _AppDrawerState extends State<AppDrawer>
             _buildDrawerTile(
               context,
               icon: Icons.feedback,
-              title: tr(LocaleKeys.drawer_rate),
+              title: context.loc.drawerRate,
               onTap: () {
                 LaunchReview.launch(
                   androidAppId: "io.gitjournal.gitjournal",
@@ -252,7 +235,7 @@ class _AppDrawerState extends State<AppDrawer>
           _buildDrawerTile(
             context,
             icon: Icons.rate_review,
-            title: tr(LocaleKeys.drawer_feedback),
+            title: context.loc.drawerFeedback,
             onTap: () async {
               await createFeedback(context);
               Navigator.pop(context);
@@ -261,7 +244,7 @@ class _AppDrawerState extends State<AppDrawer>
           _buildDrawerTile(
             context,
             icon: Icons.bug_report,
-            title: tr(LocaleKeys.drawer_bug),
+            title: context.loc.drawerBug,
             onTap: () async {
               await createBugReport(context);
               Navigator.pop(context);
@@ -271,7 +254,7 @@ class _AppDrawerState extends State<AppDrawer>
             _buildDrawerTile(
               context,
               icon: Icons.settings,
-              title: tr(LocaleKeys.settings_title),
+              title: context.loc.settingsTitle,
               onTap: () {
                 Navigator.pop(context);
                 var _ = Navigator.pushNamed(context, SettingsScreen.routePath);
@@ -294,7 +277,7 @@ class _AppDrawerState extends State<AppDrawer>
   }) {
     var theme = Theme.of(context);
     var listTileTheme = ListTileTheme.of(context);
-    var textStyle = theme.textTheme.bodyText1!.copyWith(
+    var textStyle = theme.textTheme.bodyLarge!.copyWith(
       color: selected ? theme.colorScheme.secondary : listTileTheme.textColor,
     );
 
@@ -309,8 +292,9 @@ class _AppDrawerState extends State<AppDrawer>
       selected: selected,
     );
     return Container(
-      child: tile,
+      // ignore: deprecated_member_use
       color: selected ? theme.selectedRowColor : theme.scaffoldBackgroundColor,
+      child: tile,
     );
   }
 }
@@ -318,8 +302,8 @@ class _AppDrawerState extends State<AppDrawer>
 class RepoTile extends StatelessWidget {
   const RepoTile(
     this.id, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   final String id;
 
@@ -330,7 +314,7 @@ class RepoTile extends StatelessWidget {
     var repoManager = context.watch<RepositoryManager>();
 
     var selected = repoManager.currentId == id;
-    var textStyle = theme.textTheme.bodyText1!.copyWith(
+    var textStyle = theme.textTheme.bodyLarge!.copyWith(
       color: selected ? theme.colorScheme.secondary : listTileTheme.textColor,
     );
 
@@ -352,8 +336,9 @@ class RepoTile extends StatelessWidget {
     );
 
     return Container(
-      child: tile,
+      // ignore: deprecated_member_use
       color: selected ? theme.selectedRowColor : theme.scaffoldBackgroundColor,
+      child: tile,
     );
   }
 }

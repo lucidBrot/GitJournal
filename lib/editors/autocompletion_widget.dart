@@ -7,11 +7,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-
-import 'package:time/time.dart';
-
 import 'package:gitjournal/editors/common.dart';
 import 'package:gitjournal/logger/logger.dart';
+import 'package:time/time.dart';
 
 class AutoCompletionWidget extends StatefulWidget {
   final FocusNode textFieldFocusNode;
@@ -22,14 +20,14 @@ class AutoCompletionWidget extends StatefulWidget {
   final List<String> tags;
 
   const AutoCompletionWidget({
-    Key? key,
+    super.key,
     required this.textFieldFocusNode,
     required this.textFieldKey,
     required this.textFieldStyle,
     required this.textController,
     required this.child,
     required this.tags,
-  }) : super(key: key);
+  });
 
   @override
   _AutoCompletionWidgetState createState() => _AutoCompletionWidgetState();
@@ -115,6 +113,7 @@ class _AutoCompletionWidgetState extends State<AutoCompletionWidget> {
     //print("Painter ${painter.width} $height");
 
     var list = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (var tag in widget.tags)
           Padding(
@@ -122,7 +121,6 @@ class _AutoCompletionWidgetState extends State<AutoCompletionWidget> {
             child: Text('#$tag', style: const TextStyle(fontSize: 20.0)),
           ),
       ],
-      crossAxisAlignment: CrossAxisAlignment.start,
     );
 
     _hideOverlay();
@@ -140,7 +138,7 @@ class _AutoCompletionWidgetState extends State<AutoCompletionWidget> {
         ),
       );
     });
-    Overlay.of(context)!.insert(overlayEntry!);
+    Overlay.of(context).insert(overlayEntry!);
 
     // Removes the over lay entry from the Overly after 500 milliseconds
     var _ = await Future.delayed(5000.milliseconds);

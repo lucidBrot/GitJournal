@@ -7,10 +7,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-
 import 'package:gitjournal/core/note.dart';
+import 'package:gitjournal/core/notes/note.dart';
 import 'package:gitjournal/utils/markdown.dart';
 import 'package:gitjournal/widgets/highlighted_text.dart';
+import 'package:intl/intl.dart';
 
 class NoteTile extends StatelessWidget {
   final Note note;
@@ -52,25 +53,36 @@ class NoteTile extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(16.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           if (note.title != null)
             HighlightedText(
               text: note.title!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.headline6!
-                  .copyWith(fontSize: textTheme.headline6!.fontSize! * 0.8),
+              style: textTheme.titleLarge!
+                  .copyWith(fontSize: textTheme.titleLarge!.fontSize! * 0.8),
               highlightText: searchTerm,
               highlightTextLowerCase: searchTermLowerCase,
             ),
           if (note.title != null) const SizedBox(height: 8.0),
+          if (note.title == null && note.type == NoteType.Journal)
+            HighlightedText(
+              text: '${note.created.day} ${DateFormat('MMMM, yyyy').format(note.created)}\n${DateFormat('EEEE HH:mm').format(note.created)}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.titleLarge!
+                  .copyWith(fontSize: textTheme.titleLarge!.fontSize! * 0.8),
+              highlightText: searchTerm,
+              highlightTextLowerCase: searchTermLowerCase,
+            ),
+          if (note.title == null && note.type == NoteType.Journal) const SizedBox(height: 8.0),
           Flexible(
             flex: 1,
             child: _buildBody(context, body),
           ),
         ],
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
       ),
     );
 
@@ -79,6 +91,9 @@ class NoteTile extends StatelessWidget {
       borderRadius: borderRadius,
       type: MaterialType.card,
       child: InkWell(
+        borderRadius: borderRadius,
+        onTap: () => noteTapped(note),
+        onLongPress: () => noteLongPressed(note),
         child: Hero(
           tag: note.filePath,
           child: tileContent,
@@ -89,9 +104,6 @@ class NoteTile extends StatelessWidget {
                   BuildContext toHeroContext) =>
               Material(child: toHeroContext.widget),
         ),
-        borderRadius: borderRadius,
-        onTap: () => noteTapped(note),
-        onLongPress: () => noteLongPressed(note),
       ),
     );
   }
@@ -132,8 +144,8 @@ class NoteTile extends StatelessWidget {
       text: text,
       highlightText: searchTerm,
       highlightTextLowerCase: searchTermLowerCase,
-      style: textTheme.subtitle1!
-          .copyWith(fontSize: textTheme.subtitle1!.fontSize! * 0.9),
+      style: textTheme.titleMedium!
+          .copyWith(fontSize: textTheme.titleMedium!.fontSize! * 0.9),
       overflow: TextOverflow.ellipsis,
       maxLines: _maxLines - 1,
     );

@@ -6,18 +6,15 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-
-import 'package:badges/badges.dart';
+import 'package:badges/badges.dart' as badges;
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 import 'package:git_bindings/git_bindings.dart';
-import 'package:provider/provider.dart';
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/repository.dart';
 import 'package:gitjournal/sync_attempt.dart';
 import 'package:gitjournal/utils/utils.dart';
+import 'package:provider/provider.dart';
 
 class SyncButton extends StatefulWidget {
   @override
@@ -110,10 +107,10 @@ class _SyncButtonState extends State<SyncButton> {
     } on GitException catch (e) {
       showErrorMessageSnackbar(
         context,
-        tr(LocaleKeys.widgets_SyncButton_error, args: [e.cause]),
+        context.loc.widgetsSyncButtonError(e.cause),
       );
     } catch (e) {
-      showErrorSnackbar(context, e.toString());
+      showErrorSnackbar(context, e);
     }
   }
 
@@ -135,8 +132,7 @@ class BlinkingIcon extends StatefulWidget {
   final Widget child;
   final int interval;
 
-  const BlinkingIcon({required this.child, this.interval = 500, Key? key})
-      : super(key: key);
+  const BlinkingIcon({required this.child, this.interval = 500, Key? key});
 
   @override
   _BlinkingIconState createState() => _BlinkingIconState();
@@ -187,18 +183,18 @@ class GitPendingChangesBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
     var darkMode = theme.brightness == Brightness.dark;
-    var style = theme.textTheme.caption!.copyWith(
+    var style = theme.textTheme.bodySmall!.copyWith(
       fontSize: 6.0,
       color: darkMode ? Colors.black : Colors.white,
     );
 
     final repo = Provider.of<GitJournalRepo>(context);
 
-    return Badge(
+    return badges.Badge(
       badgeContent: Text(repo.numChanges.toString(), style: style),
       showBadge: repo.numChanges != 0,
       badgeColor: theme.iconTheme.color!,
-      position: BadgePosition.topEnd(top: 10.0, end: 4.0),
+      position: badges.BadgePosition.topEnd(top: 10.0, end: 4.0),
       child: child,
     );
   }

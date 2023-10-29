@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
+import 'package:dart_git/utils/result.dart';
 import 'package:universal_io/io.dart' as io;
-
-import 'package:gitjournal/apis/githost.dart';
 
 Future<Result<void>> saveFileSafely(String filePath, List<int> bytes) {
   return catchAll(() async {
-    var newFilePath = filePath + '.new';
+    var newFilePath = '$filePath.new';
 
     var file = io.File(newFilePath);
     dynamic _;

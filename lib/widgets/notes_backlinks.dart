@@ -4,18 +4,15 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import 'package:flutter/material.dart';
-
 import 'package:collection/collection.dart';
-import 'package:easy_localization/easy_localization.dart';
-
+import 'package:flutter/material.dart';
 import 'package:gitjournal/core/folder/notes_folder.dart';
 import 'package:gitjournal/core/folder/notes_folder_fs.dart';
 import 'package:gitjournal/core/link.dart';
 import 'package:gitjournal/core/note.dart';
 import 'package:gitjournal/core/views/note_links_view.dart';
-import 'package:gitjournal/features.dart';
 import 'package:gitjournal/folder_views/common.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/utils/link_resolver.dart';
 import 'package:gitjournal/widgets/future_builder_with_progress.dart';
 import 'package:gitjournal/widgets/pro_overlay.dart';
@@ -84,10 +81,12 @@ class _NoteBacklinkRendererState extends State<NoteBacklinkRenderer> {
     var num = _linkedNotes.length;
     var textTheme = Theme.of(context).textTheme;
     var c = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          plural("widgets.backlinks.title", num),
-          style: textTheme.headline6,
+          context.loc.widgetsBacklinksTitle(num),
+          style: textTheme.titleLarge,
         ),
         const SizedBox(height: 8.0),
         for (var note in _linkedNotes)
@@ -99,13 +98,11 @@ class _NoteBacklinkRendererState extends State<NoteBacklinkRenderer> {
             },
           ),
       ],
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
     );
 
     var backgroundColor = Colors.grey[200];
     if (Theme.of(context).brightness == Brightness.dark) {
-      backgroundColor = Theme.of(context).backgroundColor;
+      backgroundColor = Theme.of(context).colorScheme.background;
     }
     var child = Container(
       color: backgroundColor,
@@ -115,7 +112,7 @@ class _NoteBacklinkRendererState extends State<NoteBacklinkRenderer> {
         child: c,
       ),
     );
-    return ProOverlay(feature: Feature.backlinks, child: child);
+    return ProOverlay(child: child);
   }
 }
 
@@ -144,13 +141,13 @@ class NoteSnippet extends StatelessWidget {
           color: theme.scaffoldBackgroundColor,
           width: MediaQuery.of(context).size.width,
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(title, style: textTheme.bodyText1),
+              Text(title, style: textTheme.bodyLarge),
               const SizedBox(height: 8.0),
               _buildSummary(context),
             ],
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
           ),
         ),
       ),
@@ -198,7 +195,7 @@ class NoteSnippet extends StatelessWidget {
     // FIXME: Ideally, we should be parsing the entire markdown properly and rendering all of it
     return RichText(
       text: TextSpan(
-        children: _extraMetaLinks(textTheme.bodyText2!, paragraph),
+        children: _extraMetaLinks(textTheme.bodyMedium!, paragraph),
       ),
       maxLines: 3,
     );

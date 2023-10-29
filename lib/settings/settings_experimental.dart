@@ -6,16 +6,13 @@
 
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
-
 import 'package:community_material_icon/community_material_icon.dart';
 import 'package:crypto/crypto.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:provider/provider.dart';
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:flutter/material.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/settings/app_config.dart';
+import 'package:provider/provider.dart';
 
 class ExperimentalSettingsScreen extends StatefulWidget {
   static const routePath = '/settings/experimental';
@@ -33,7 +30,7 @@ class _ExperimentalSettingsScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(LocaleKeys.settings_experimental_title)),
+        title: Text(context.loc.settingsExperimentalTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -43,14 +40,14 @@ class _ExperimentalSettingsScreenState
       ),
       body: Scrollbar(
         child: ListView(
+          padding: const EdgeInsets.fromLTRB(0.0, 16.0, 0.0, 0.0),
           children: <Widget>[
             const Center(
               child: Icon(CommunityMaterialIcons.flask, size: 64 * 2),
             ),
             const Divider(),
             SwitchListTile(
-              title:
-                  Text(tr(LocaleKeys.settings_experimental_includeSubfolders)),
+              title: Text(context.loc.settingsExperimentalIncludeSubfolders),
               value: appConfig.experimentalSubfolders,
               onChanged: (bool newVal) {
                 appConfig.experimentalSubfolders = newVal;
@@ -59,16 +56,7 @@ class _ExperimentalSettingsScreenState
               },
             ),
             SwitchListTile(
-              title: Text(tr(LocaleKeys.settings_experimental_graphView)),
-              value: appConfig.experimentalGraphView,
-              onChanged: (bool newVal) {
-                appConfig.experimentalGraphView = newVal;
-                appConfig.save();
-                setState(() {});
-              },
-            ),
-            SwitchListTile(
-              title: Text(tr(LocaleKeys.settings_experimental_markdownToolbar)),
+              title: Text(context.loc.settingsExperimentalMarkdownToolbar),
               value: appConfig.experimentalMarkdownToolbar,
               onChanged: (bool newVal) {
                 appConfig.experimentalMarkdownToolbar = newVal;
@@ -77,7 +65,7 @@ class _ExperimentalSettingsScreenState
               },
             ),
             SwitchListTile(
-              title: Text(tr(LocaleKeys.settings_experimental_accounts)),
+              title: Text(context.loc.settingsExperimentalAccounts),
               value: appConfig.experimentalAccounts,
               onChanged: (bool newVal) {
                 appConfig.experimentalAccounts = newVal;
@@ -86,7 +74,7 @@ class _ExperimentalSettingsScreenState
               },
             ),
             SwitchListTile(
-              title: Text(tr(LocaleKeys.settings_experimental_merge)),
+              title: Text(context.loc.settingsExperimentalMerge),
               value: appConfig.experimentalGitMerge,
               onChanged: (bool newVal) {
                 appConfig.experimentalGitMerge = newVal;
@@ -95,8 +83,7 @@ class _ExperimentalSettingsScreenState
               },
             ),
             SwitchListTile(
-              title:
-                  Text(tr(LocaleKeys.settings_experimental_experimentalGitOps)),
+              title: Text(context.loc.settingsExperimentalExperimentalGitOps),
               value: appConfig.experimentalGitOps,
               onChanged: (bool newVal) {
                 appConfig.experimentalGitOps = newVal;
@@ -105,8 +92,7 @@ class _ExperimentalSettingsScreenState
               },
             ),
             SwitchListTile(
-              title:
-                  Text(tr(LocaleKeys.settings_experimental_autoCompleteTags)),
+              title: Text(context.loc.settingsExperimentalAutoCompleteTags),
               value: appConfig.experimentalTagAutoCompletion,
               onChanged: (bool newVal) {
                 appConfig.experimentalTagAutoCompletion = newVal;
@@ -115,7 +101,7 @@ class _ExperimentalSettingsScreenState
               },
             ),
             SwitchListTile(
-              title: Text(tr(LocaleKeys.settings_experimental_history)),
+              title: Text(context.loc.settingsExperimentalHistory),
               value: appConfig.experimentalHistory,
               onChanged: (bool newVal) {
                 appConfig.experimentalHistory = newVal;
@@ -125,7 +111,7 @@ class _ExperimentalSettingsScreenState
             ),
             ListTile(
               title: const Text('Enter Pro Password'),
-              subtitle: Text('Pro: ' + AppConfig.instance.proMode.toString()),
+              subtitle: Text('Pro: ${AppConfig.instance.proMode}'),
               onTap: () async {
                 var _ = await showDialog(
                   context: context,
@@ -135,7 +121,6 @@ class _ExperimentalSettingsScreenState
               },
             ),
           ],
-          padding: const EdgeInsets.fromLTRB(0.0, 16.0, 0.0, 0.0),
         ),
       ),
     );
@@ -148,7 +133,7 @@ class _PasswordForm extends StatelessWidget {
     return AlertDialog(
       title: const Text('Enter Pro Password'),
       content: TextField(
-        style: Theme.of(context).textTheme.headline6,
+        style: Theme.of(context).textTheme.titleLarge,
         decoration: const InputDecoration(
           icon: Icon(Icons.security_rounded),
           hintText: 'Enter Password',
@@ -173,13 +158,13 @@ class _PasswordForm extends StatelessWidget {
 
           var appConfig = AppConfig.instance;
           appConfig.validateProMode = false;
-          appConfig.proExpirationDate = DateTime(2050, 01, 01);
+          appConfig.proMode = true;
           appConfig.save();
         },
       ),
       actions: <Widget>[
         TextButton(
-          child: Text(tr(LocaleKeys.settings_ok)),
+          child: Text(context.loc.settingsOk),
           onPressed: () {
             Navigator.of(context).pop();
           },

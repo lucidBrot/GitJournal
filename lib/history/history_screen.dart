@@ -6,28 +6,26 @@
 
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
-
 import 'package:dart_git/dart_git.dart';
 import 'package:dart_git/plumbing/commit_iterator.dart';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:gitjournal/folder_views/folder_view.dart';
+import 'package:gitjournal/l10n.dart';
+import 'package:gitjournal/logger/logger.dart';
+import 'package:gitjournal/repository.dart';
+import 'package:gitjournal/sync_attempt.dart';
+import 'package:gitjournal/widgets/app_drawer.dart';
 import 'package:provider/provider.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:timeline_tile/timeline_tile.dart';
 
-import 'package:gitjournal/folder_views/folder_view.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
-import 'package:gitjournal/logger/logger.dart';
-import 'package:gitjournal/repository.dart';
-import 'package:gitjournal/sync_attempt.dart';
-import 'package:gitjournal/widgets/app_drawer.dart';
 import 'commit_data_widget.dart';
 
 class HistoryScreen extends StatelessWidget {
   static const String routePath = "/history";
 
-  const HistoryScreen({Key? key}) : super(key: key);
+  const HistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +33,7 @@ class HistoryScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(LocaleKeys.drawer_history.tr()),
+        title: Text(context.loc.drawerHistory),
       ),
       body: HistoryWidget(gjRepo: gjRepo),
       drawer: AppDrawer(),
@@ -48,7 +46,7 @@ class HistoryWidget extends StatefulWidget {
 
   String get repoPath => gjRepo.repoPath;
 
-  const HistoryWidget({Key? key, required this.gjRepo}) : super(key: key);
+  const HistoryWidget({super.key, required this.gjRepo});
 
   @override
   _HistoryWidgetState createState() => _HistoryWidgetState();
@@ -246,7 +244,7 @@ class _HistoryWidgetState extends State<HistoryWidget> {
 class _SyncAttemptTile extends StatelessWidget {
   final SyncAttempt attempt;
 
-  const _SyncAttemptTile(this.attempt, {Key? key}) : super(key: key);
+  const _SyncAttemptTile(this.attempt);
 
   @override
   Widget build(BuildContext context) {
@@ -273,11 +271,10 @@ class _CommitTile extends StatefulWidget {
   final GitCommit? prevCommit;
 
   const _CommitTile({
-    Key? key,
     required this.gitRepo,
     required this.commit,
     required this.prevCommit,
-  }) : super(key: key);
+  });
 
   @override
   State<_CommitTile> createState() => _CommitTileState();
@@ -300,9 +297,9 @@ class _CommitTileState extends State<_CommitTile> {
     Widget body = Row(
       children: <Widget>[
         Expanded(
-          child: Text(title, style: textTheme.subtitle2!),
+          child: Text(title, style: textTheme.titleSmall!),
         ),
-        Text(when, style: textTheme.caption)
+        Text(when, style: textTheme.bodySmall)
       ],
       // crossAxisAlignment: CrossAxisAlignment.baseline,
       // textBaseline: TextBaseline.alphabetic,
@@ -310,6 +307,7 @@ class _CommitTileState extends State<_CommitTile> {
 
     if (expanded && widget.prevCommit != null) {
       body = Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           body,
           CommitDataWidget(
@@ -318,7 +316,6 @@ class _CommitTileState extends State<_CommitTile> {
             parentCommit: widget.prevCommit!,
           ),
         ],
-        mainAxisSize: MainAxisSize.min,
       );
     }
 
@@ -349,7 +346,7 @@ class _CommitTileState extends State<_CommitTile> {
 class _FailureTile<T> extends StatelessWidget {
   final Result<T> result;
 
-  _FailureTile({Key? key, required this.result}) : super(key: key) {
+  _FailureTile({super.key, required this.result}) {
     Log.e("Failure", ex: result.error, stacktrace: result.stackTrace);
   }
 
@@ -368,7 +365,7 @@ class _FailureTile<T> extends StatelessWidget {
 // * Files + changes
 
 // class _ExpandedCommitTile extends StatelessWidget {
-//   const _ExpandedCommitTile({Key? key}) : super(key: key);
+//   const _ExpandedCommitTile({super.key}) ;
 
 //   @override
 //   Widget build(BuildContext context) {

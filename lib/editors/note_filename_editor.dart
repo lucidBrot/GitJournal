@@ -5,13 +5,10 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
 import 'package:fs_shim/fs_shim.dart';
 import 'package:function_types/function_types.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:path/path.dart' as p;
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
 
 class NoteFileNameEditor extends StatefulWidget {
   final String filePath;
@@ -22,13 +19,12 @@ class NoteFileNameEditor extends StatefulWidget {
   final String dirName;
 
   NoteFileNameEditor({
-    Key? key,
+    super.key,
     required this.filePath,
     required this.fs,
     required this.onChanged,
   })  : fileName = p.basename(filePath),
-        dirName = p.dirname(filePath),
-        super(key: key);
+        dirName = p.dirname(filePath);
 
   @override
   _NoteFileNameEditorState createState() => _NoteFileNameEditorState();
@@ -40,13 +36,13 @@ class _NoteFileNameEditorState extends State<NoteFileNameEditor> {
   @override
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
-    var style = theme.textTheme.headline6;
+    var style = theme.textTheme.titleLarge;
 
     return TextField(
       keyboardType: TextInputType.text,
       style: style,
       decoration: InputDecoration(
-        hintText: tr(LocaleKeys.editors_common_defaultFileNameHint),
+        hintText: context.loc.editorsCommonDefaultFileNameHint,
         border: InputBorder.none,
         fillColor: theme.scaffoldBackgroundColor,
         hoverColor: theme.scaffoldBackgroundColor,

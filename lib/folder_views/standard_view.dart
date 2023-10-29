@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:gitjournal/core/folder/notes_folder.dart';
 import 'package:gitjournal/core/folder/sorting_mode.dart';
 import 'package:gitjournal/core/note.dart';
+import 'package:gitjournal/core/notes/note.dart';
 import 'package:gitjournal/core/views/summary_view.dart';
 import 'package:gitjournal/folder_views/journal_view.dart';
 import 'package:gitjournal/folder_views/list_view.dart';
@@ -120,7 +121,7 @@ class StandardView extends StatelessWidget {
 
 class StandardNoteListTile extends StatelessWidget {
   const StandardNoteListTile({
-    Key? key,
+    super.key,
     required this.headerType,
     required this.searchTerm,
     required this.searchTermLowerCase,
@@ -130,7 +131,7 @@ class StandardNoteListTile extends StatelessWidget {
     required this.note,
     required this.isSelected,
     required this.noteSummary,
-  }) : super(key: key);
+  });
 
   static final _dateFormat = DateFormat('dd MMM, yyyy');
 
@@ -164,7 +165,7 @@ class StandardNoteListTile extends StatelessWidget {
     var textTheme = Theme.of(context).textTheme;
     Widget titleWidget = HighlightedText(
       text: title,
-      style: textTheme.headline6!,
+      style: textTheme.titleLarge!,
       overflow: TextOverflow.ellipsis,
       highlightText: searchTerm,
       highlightTextLowerCase: searchTermLowerCase,
@@ -181,14 +182,14 @@ class StandardNoteListTile extends StatelessWidget {
 
     if (date != null) {
       var dateStr = _dateFormat.format(date);
-      trailing = Text(dateStr, style: textTheme.caption);
+      trailing = Text(dateStr, style: textTheme.bodySmall);
     }
 
     var titleRow = Row(
-      children: <Widget>[Expanded(child: titleWidget), trailing],
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
+      children: <Widget>[Expanded(child: titleWidget), trailing],
     );
 
     ListTile tile;
@@ -196,10 +197,10 @@ class StandardNoteListTile extends StatelessWidget {
       var summary = <Widget>[
         const SizedBox(height: 8.0),
         HighlightedText(
-          text: noteSummary + '\n', // no minLines option
+          text: '$noteSummary\n', // no minLines option
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
-          style: textTheme.bodyText2!,
+          style: textTheme.bodyMedium!,
           highlightText: searchTerm,
           highlightTextLowerCase: searchTermLowerCase,
         ),
@@ -209,8 +210,8 @@ class StandardNoteListTile extends StatelessWidget {
         isThreeLine: true,
         title: titleRow,
         subtitle: Column(
-          children: summary,
           crossAxisAlignment: CrossAxisAlignment.start,
+          children: summary,
         ),
         onTap: () => noteTapped(note),
         onLongPress: () => noteLongPressed(note),

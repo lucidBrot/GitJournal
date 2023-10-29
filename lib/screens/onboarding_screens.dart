@@ -4,24 +4,31 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import 'package:flutter/material.dart';
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:dots_indicator/dots_indicator.dart';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 import 'package:function_types/function_types.dart';
+import 'package:gitjournal/analytics/analytics.dart';
+import 'package:gitjournal/l10n.dart';
+import 'package:gitjournal/screens/home_screen.dart';
+import 'package:gitjournal/settings/app_config.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:time/time.dart';
 
-import 'package:gitjournal/analytics/analytics.dart';
-import 'package:gitjournal/screens/home_screen.dart';
-import 'package:gitjournal/settings/app_config.dart';
-
 class OnBoardingScreen extends StatefulWidget {
   static const routePath = "/onBoarding";
 
-  const OnBoardingScreen();
+  final bool skipPage1;
+  final bool skipPage2;
+  final bool skipPage3;
+
+  const OnBoardingScreen({
+    super.key,
+    this.skipPage1 = false,
+    this.skipPage2 = false,
+    this.skipPage3 = false,
+  });
 
   @override
   OnBoardingScreenState createState() {
@@ -54,9 +61,9 @@ class OnBoardingScreenState extends State<OnBoardingScreen> {
   @override
   Widget build(BuildContext context) {
     var pages = <Widget>[
-      OnBoardingPage1(),
-      OnBoardingPage2(),
-      OnBoardingPage3(),
+      if (!widget.skipPage1) OnBoardingPage1(),
+      if (!widget.skipPage2) OnBoardingPage2(),
+      if (!widget.skipPage3) OnBoardingPage3(),
     ];
     var pageView = PageView(
       controller: _pageController,
@@ -74,11 +81,12 @@ class OnBoardingScreenState extends State<OnBoardingScreen> {
         children: <Widget>[
           OnBoardingBottomButton(
             key: const ValueKey("Skip"),
-            text: tr("OnBoarding.Skip"),
+            text: context.loc.onBoardingSkip,
             onPressed: _finish,
           ),
           Expanded(
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 DotsIndicator(
                   dotsCount: pages.length,
@@ -88,24 +96,25 @@ class OnBoardingScreenState extends State<OnBoardingScreen> {
                   ),
                 ),
               ],
-              mainAxisAlignment: MainAxisAlignment.center,
             ),
           ),
           OnBoardingBottomButton(
             key: const ValueKey("Next"),
-            text: tr("OnBoarding.Next"),
+            text: context.loc.onBoardingNext,
             onPressed: _nextPage,
           ),
         ],
       );
 
       bottomBar = Container(
+        color: Theme.of(context).brightness == Brightness.light
+            ? Colors.grey[200]
+            : Theme.of(context).primaryColor,
         child: SizedBox(
           width: double.infinity,
           height: _bottomBarHeight,
           child: row,
         ),
-        color: Colors.grey[200],
       );
     } else {
       bottomBar = SizedBox(
@@ -113,16 +122,16 @@ class OnBoardingScreenState extends State<OnBoardingScreen> {
         height: _bottomBarHeight,
         child: ElevatedButton(
           key: const ValueKey("GetStarted"),
-          child: Text(
-            tr("OnBoarding.getStarted"),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.button,
-          ),
           style: ButtonStyle(
             backgroundColor: MaterialStateProperty.all<Color>(
                 Theme.of(context).primaryColor),
           ),
           onPressed: _finish,
+          child: Text(
+            context.loc.onBoardingGetStarted,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
         ),
       );
     }
@@ -131,8 +140,8 @@ class OnBoardingScreenState extends State<OnBoardingScreen> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        child: pageView,
         padding: const EdgeInsets.all(16.0),
+        child: pageView,
       ),
       bottomNavigationBar: AnimatedSwitcher(
         duration: 300.milliseconds,
@@ -162,22 +171,30 @@ class OnBoardingBottomButton extends StatelessWidget {
   final String text;
 
   const OnBoardingBottomButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    var isDark = Theme.of(context).brightness == Brightness.dark;
+
     return TextButton(
       key: key,
+      onPressed: onPressed,
+      style: isDark
+          ? ButtonStyle(
+              backgroundColor: MaterialStateProperty.all<Color>(
+                Theme.of(context).primaryColor,
+              ),
+            )
+          : null,
       child: Text(
         text,
         textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.button,
+        style: Theme.of(context).textTheme.labelLarge,
       ),
-      //color: Colors.grey[200],
-      onPressed: onPressed,
     );
   }
 }
@@ -186,7 +203,7 @@ class OnBoardingPage1 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var textTheme = Theme.of(context).textTheme;
-    var headerTextStyle = textTheme.headline2!.copyWith(fontFamily: "Lato");
+    var headerTextStyle = textTheme.displayMedium!.copyWith(fontFamily: "Lato");
     var header = Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -205,18 +222,18 @@ class OnBoardingPage1 extends StatelessWidget {
     );
 
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Center(child: header),
         const SizedBox(height: 64.0),
         AutoSizeText(
-          tr("OnBoarding.subtitle"),
-          style: textTheme.headline5,
+          context.loc.onBoardingSubtitle,
+          style: textTheme.headlineSmall,
           textAlign: TextAlign.center,
           maxLines: 2,
         ),
       ],
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
     );
   }
 }
@@ -239,18 +256,18 @@ class OnBoardingPage2 extends StatelessWidget {
     );
 
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Center(child: header),
         const SizedBox(height: 64.0),
         AutoSizeText(
-          tr("OnBoarding.page2"),
-          style: textTheme.headline5,
+          context.loc.onBoardingPage2,
+          style: textTheme.headlineSmall,
           textAlign: TextAlign.center,
           maxLines: 3,
         ),
       ],
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
     );
   }
 }
@@ -273,18 +290,18 @@ class OnBoardingPage3 extends StatelessWidget {
     );
 
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Center(child: header),
         const SizedBox(height: 64.0),
         AutoSizeText(
-          tr("OnBoarding.page3"),
-          style: textTheme.headline5,
+          context.loc.onBoardingPage3,
+          style: textTheme.headlineSmall,
           textAlign: TextAlign.center,
           maxLines: 2,
         ),
       ],
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
     );
   }
 }

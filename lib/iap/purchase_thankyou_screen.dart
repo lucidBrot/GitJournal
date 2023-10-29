@@ -5,10 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 
 class PurchaseThankYouScreen extends StatelessWidget {
   static const routePath = '/purchase_thank_you';
@@ -18,20 +15,20 @@ class PurchaseThankYouScreen extends StatelessWidget {
     var theme = Theme.of(context);
     var textTheme = theme.textTheme;
     Widget w = Column(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: <Widget>[
         Text(
-          tr(LocaleKeys.purchase_screen_thanks_title),
-          style: textTheme.headline3,
+          context.loc.purchaseScreenThanksTitle,
+          style: textTheme.displaySmall,
         ),
         Text(
-          tr(LocaleKeys.purchase_screen_thanks_subtitle),
-          style: textTheme.headline4,
+          context.loc.purchaseScreenThanksSubtitle,
+          style: textTheme.headlineMedium,
           textAlign: TextAlign.center,
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(64.0, 16.0, 64.0, 16.0),
           child: ElevatedButton(
-            child: const Text("Back"),
             onPressed: () {
               Navigator.of(context).pop();
             },
@@ -39,16 +36,16 @@ class PurchaseThankYouScreen extends StatelessWidget {
               backgroundColor: MaterialStateProperty.all<Color>(
                   Theme.of(context).primaryColor),
             ),
+            child: const Text("Back"),
           ),
         ),
       ],
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
     );
 
     return Container(
-      child: SafeArea(child: w),
       color: theme.scaffoldBackgroundColor,
       padding: const EdgeInsets.all(16.0),
+      child: SafeArea(child: w),
     );
   }
 }

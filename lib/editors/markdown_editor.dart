@@ -12,6 +12,7 @@ import 'package:gitjournal/core/folder/notes_folder.dart';
 import 'package:gitjournal/core/image.dart' as core;
 import 'package:gitjournal/core/image.dart';
 import 'package:gitjournal/core/note.dart';
+import 'package:gitjournal/core/notes/note.dart';
 import 'package:gitjournal/editors/common.dart';
 import 'package:gitjournal/editors/editor_scroll_view.dart';
 import 'package:gitjournal/editors/heuristics.dart';
@@ -39,7 +40,7 @@ class MarkdownEditor extends StatefulWidget implements Editor {
   final ThemeData theme;
 
   const MarkdownEditor({
-    Key? key,
+    super.key,
     required this.note,
     required this.parentFolder,
     required this.noteModified,
@@ -47,7 +48,7 @@ class MarkdownEditor extends StatefulWidget implements Editor {
     required this.highlightString,
     required this.theme,
     required this.common,
-  }) : super(key: key);
+  });
 
   @override
   MarkdownEditorState createState() {

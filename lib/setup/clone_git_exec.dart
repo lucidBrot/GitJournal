@@ -6,10 +6,10 @@
 
 import 'package:dart_git/dart_git.dart';
 import 'package:function_types/function_types.dart';
+import 'package:git_setup/git_transfer_progress.dart';
 
 import 'package:gitjournal/utils/git_desktop.dart';
 import 'clone.dart';
-import 'git_transfer_progress.dart';
 
 Future<Result<void>> cloneRemote({
   required String repoPath,
@@ -33,9 +33,27 @@ Future<Result<void>> cloneRemote({
       authorName: authorName,
       authorEmail: authorEmail,
       progressUpdate: progressUpdate,
+      gitCloneFn: _clone,
       gitFetchFn: _fetch,
       defaultBranchFn: _defaultBranch,
     ),
+  );
+}
+
+Future<Result<void>> _clone({
+  required String cloneUrl,
+  required String repoPath,
+  required String sshPublicKey,
+  required String sshPrivateKey,
+  required String sshPassword,
+  required String statusFile,
+}) async {
+  // FIXME: Stop ignoring the statusFile
+  return gitCloneViaExecutable(
+    repoPath: repoPath,
+    cloneUrl: cloneUrl,
+    privateKey: sshPrivateKey,
+    privateKeyPassword: sshPassword,
   );
 }
 

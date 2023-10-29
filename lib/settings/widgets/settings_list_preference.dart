@@ -5,11 +5,8 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
 import 'package:function_types/function_types.dart';
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 
 class ListPreference extends StatelessWidget {
   final String title;
@@ -24,8 +21,8 @@ class ListPreference extends StatelessWidget {
     required this.options,
     required this.onChange,
     this.enabled = true,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +32,11 @@ class ListPreference extends StatelessWidget {
       onTap: () async {
         var option = await showDialog<String>(
           context: context,
-          builder: _dialogBuilder,
+          builder: (_) => ListPreferenceSelectionDialog(
+            title: title,
+            options: options,
+            currentOption: currentOption,
+          ),
         );
 
         if (option != null) {
@@ -45,20 +46,22 @@ class ListPreference extends StatelessWidget {
       enabled: enabled,
     );
   }
+}
 
-  Widget _dialogBuilder(BuildContext context) {
-    var children = <Widget>[];
-    for (var o in options) {
-      var tile = _LabeledRadio(
-        label: o,
-        value: o,
-        groupValue: currentOption,
-        onChanged: (String? val) {
-          Navigator.of(context).pop(val);
-        },
-      );
-      children.add(tile);
-    }
+class ListPreferenceSelectionDialog extends StatelessWidget {
+  final List<String> options;
+  final String? currentOption;
+  final String title;
+
+  const ListPreferenceSelectionDialog({
+    super.key,
+    required this.options,
+    this.currentOption,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(title),
       titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
@@ -67,15 +70,25 @@ class ListPreference extends StatelessWidget {
         child: ScrollConfiguration(
           behavior: _NoScrollBehavior(),
           child: ListView(
-            children: children,
             shrinkWrap: true,
+            children: [
+              for (var o in options)
+                _LabeledRadio(
+                  label: o,
+                  value: o,
+                  groupValue: currentOption,
+                  onChanged: (String? val) {
+                    Navigator.of(context).pop(val);
+                  },
+                ),
+            ],
           ),
         ),
       ),
       contentPadding: EdgeInsets.zero,
       actions: <Widget>[
         TextButton(
-          child: Text(tr(LocaleKeys.settings_cancel)),
+          child: Text(context.loc.settingsCancel),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -127,8 +140,8 @@ class _LabeledRadio extends StatelessWidget {
 
 class _NoScrollBehavior extends ScrollBehavior {
   @override
-  Widget buildViewportChrome(
-      BuildContext context, Widget child, AxisDirection axisDirection) {
+  Widget buildOverscrollIndicator(
+      BuildContext context, Widget child, ScrollableDetails details) {
     return child;
   }
 }

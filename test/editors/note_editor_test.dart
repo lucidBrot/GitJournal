@@ -3,26 +3,24 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
-
 import 'dart:io';
 
 import 'package:dart_git/git.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
-
 import 'package:dart_git/plumbing/git_hash.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path/path.dart' as p;
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:gitjournal/change_notifiers.dart';
 import 'package:gitjournal/editors/common_types.dart';
 import 'package:gitjournal/editors/note_body_editor.dart';
 import 'package:gitjournal/editors/note_editor.dart';
 import 'package:gitjournal/editors/note_title_editor.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/repository.dart';
 import 'package:gitjournal/repository_manager.dart';
 import 'package:gitjournal/settings/app_config.dart';
+import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../lib.dart';
 
 void main() {
@@ -49,15 +47,17 @@ void main() {
   }
 
   Widget _buildApp(Widget widget) {
-    EasyLocalization.logger.enableLevels = [];
-
     return GitJournalChangeNotifiers(
       appConfig: AppConfig(),
       repoManager: repoManager,
       pref: pref,
-      child: MaterialApp(
-        home: widget,
-      ),
+      child: Builder(builder: (context) {
+        return MaterialApp(
+          home: widget,
+          localizationsDelegates: gitJournalLocalizationDelegates,
+          supportedLocales: gitJournalSupportedLocales,
+        );
+      }),
     );
   }
 
@@ -94,13 +94,59 @@ void main() {
     expect(file.existsSync(), true);
   });
 
+  testWidgets('New Note with Extra MetaData', (tester) async {
+    await tester.runAsync(
+      () async => await _setup('7fc65b59170bdc91013eb56cdc65fa3307f2e7de'),
+    );
+
+    var widget = NoteEditor.newNote(
+      repo.rootFolder,
+      repo.rootFolder,
+      EditorType.Markdown,
+      existingText: "",
+      existingImages: const [],
+      newNoteExtraProps: const {'foo': 1},
+    );
+
+    await tester.pumpWidget(_buildApp(widget));
+    await tester.pumpAndSettle();
+
+    var titleFinder = find.byType(NoteTitleEditor);
+    expect(titleFinder, findsOneWidget);
+
+    await tester.enterText(titleFinder, "Fake-Title");
+    await tester.pump();
+
+    var saveButtonFinder = find.byKey(const ValueKey('NewEntry'));
+    expect(saveButtonFinder, findsOneWidget);
+
+    await tester.runAsync(() async {
+      var saveButtonFinder = find.byKey(const ValueKey('NewEntry'));
+      expect(saveButtonFinder, findsOneWidget);
+      await tester.tap(saveButtonFinder);
+      await tester.pumpAndSettle();
+
+      await Future.delayed(const Duration(milliseconds: 100));
+    });
+
+    var file = File(p.join(repoPath, 'Fake-Title.md'));
+    expect(file.existsSync(), true);
+
+    var x = file.readAsStringSync();
+    expect(x.length, isNonZero);
+
+    var note = repo.rootFolder.getNoteWithSpec('Fake-Title.md')!;
+    expect(note.extraProps.length, 1);
+    expect(note.extraProps['foo'], 1);
+  });
+
   testWidgets('Existing Note Rename and Exit', (tester) async {
     await tester.runAsync(
       () async => await _setup('7fc65b59170bdc91013eb56cdc65fa3307f2e7de'),
     );
 
     // FIXME: Use a proper size of a mobile, also set the DPI
-    tester.binding.window.physicalSizeTestValue = const Size(10800, 23400);
+    await tester.binding.setSurfaceSize(const Size(10800, 23400));
     await tester.pumpAndSettle();
 
     var note = repo.rootFolder.getNoteWithSpec('doc.md')!;
@@ -164,7 +210,7 @@ void main() {
     );
 
     // FIXME: Use a proper size of a mobile, also set the DPI
-    tester.binding.window.physicalSizeTestValue = const Size(10800, 23400);
+    await tester.binding.setSurfaceSize(const Size(10800, 23400));
     await tester.pumpAndSettle();
 
     var note = repo.rootFolder.getNoteWithSpec('doc.md')!;
@@ -214,7 +260,7 @@ void main() {
     );
 
     // FIXME: Use a proper size of a mobile, also set the DPI
-    tester.binding.window.physicalSizeTestValue = const Size(10800, 23400);
+    await tester.binding.setSurfaceSize(const Size(10800, 23400));
     await tester.pumpAndSettle();
 
     // Open the note

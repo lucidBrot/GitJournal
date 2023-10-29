@@ -5,14 +5,11 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/settings/settings_screen.dart';
 import 'package:gitjournal/settings/widgets/version_number_widgit.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const _privacyUrl = "https://gitjournal.io/privacy";
 const _termsUrl = "https://gitjournal.io/terms";
@@ -20,7 +17,7 @@ const _termsUrl = "https://gitjournal.io/terms";
 class SettingsAboutPage extends StatelessWidget {
   static const routePath = '/settings/about';
 
-  const SettingsAboutPage({Key? key}) : super(key: key);
+  const SettingsAboutPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,24 +28,30 @@ class SettingsAboutPage extends StatelessWidget {
         const VersionNumberTile(),
         SettingsTile(
           iconData: FontAwesomeIcons.userShield,
-          title: LocaleKeys.settings_privacy.tr(),
+          title: context.loc.settingsPrivacy,
           subtitle: _privacyUrl.replaceAll('https://', ''),
           onTap: () {
-            var _ = launch(_privacyUrl);
+            var _ = launchUrl(
+              Uri.parse(_privacyUrl),
+              mode: LaunchMode.externalApplication,
+            );
           },
         ),
         SettingsTile(
           iconData: FontAwesomeIcons.fileContract,
-          title: LocaleKeys.settings_terms.tr(),
+          title: context.loc.settingsTerms,
           subtitle: _termsUrl.replaceAll('https://', ''),
           onTap: () {
-            var _ = launch(_termsUrl);
+            var _ = launchUrl(
+              Uri.parse(_termsUrl),
+              mode: LaunchMode.externalApplication,
+            );
           },
         ),
         SettingsTile(
-          iconData: FontAwesomeIcons.infoCircle,
-          title: LocaleKeys.settings_license_title.tr(),
-          subtitle: LocaleKeys.settings_license_subtitle.tr(),
+          iconData: FontAwesomeIcons.circleInfo,
+          title: context.loc.settingsLicenseTitle,
+          subtitle: context.loc.settingsLicenseSubtitle,
           onTap: () {
             showLicensePage(
               context: context,
@@ -60,7 +63,7 @@ class SettingsAboutPage extends StatelessWidget {
     );
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr(LocaleKeys.settings_project_about)),
+        title: Text(context.loc.settingsProjectAbout),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -74,7 +77,7 @@ class SettingsAboutPage extends StatelessWidget {
 }
 
 class _AboutPageHeader extends StatelessWidget {
-  const _AboutPageHeader({Key? key}) : super(key: key);
+  const _AboutPageHeader();
 
   @override
   Widget build(BuildContext context) {
@@ -87,10 +90,10 @@ class GitJournalLogo extends StatelessWidget {
   final int height;
 
   const GitJournalLogo({
-    Key? key,
+    super.key,
     required this.width,
     required this.height,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

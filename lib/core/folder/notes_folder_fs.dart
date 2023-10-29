@@ -4,20 +4,21 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import 'package:easy_localization/easy_localization.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
+import 'package:flutter/widgets.dart';
+import 'package:gitjournal/core/file/file_storage.dart';
+import 'package:gitjournal/core/file/unopened_files.dart';
+import 'package:gitjournal/core/note_storage.dart';
+import 'package:gitjournal/core/notes/note.dart';
+import 'package:gitjournal/core/views/inline_tags_view.dart';
+import 'package:gitjournal/l10n.dart';
+import 'package:gitjournal/logger/logger.dart';
+import 'package:gitjournal/utils/result.dart';
 import 'package:path/path.dart' as p;
 import 'package:path/path.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:universal_io/io.dart' as io;
 
-import 'package:gitjournal/core/file/file_storage.dart';
-import 'package:gitjournal/core/file/unopened_files.dart';
-import 'package:gitjournal/core/note_storage.dart';
-import 'package:gitjournal/core/views/inline_tags_view.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
-import 'package:gitjournal/logger/logger.dart';
-import 'package:gitjournal/utils/result.dart';
 import '../file/file.dart';
 import '../file/ignored_file.dart';
 import '../note.dart';
@@ -529,12 +530,8 @@ class NotesFolderFS with NotesFolderNotifier implements NotesFolder {
   }
 
   @override
-  String get publicName {
-    var spec = folderPath;
-    if (spec.isEmpty) {
-      return tr(LocaleKeys.rootFolder);
-    }
-    return spec;
+  String publicName(BuildContext context) {
+    return folderPath.isEmpty ? context.loc.rootFolder : folderPath;
   }
 
   Iterable<Note> getAllNotes() sync* {
@@ -708,7 +705,7 @@ class NotesFolderFS with NotesFolderNotifier implements NotesFolder {
     }
 
     note.parent.remove(note);
-    note = note.copyWith(parent: destFolder);
+    note = note.copyWith(parent: destFolder, filePath: "${destFolder.folderPath}/${note.fileName}");
     note.parent.add(note);
 
     return Result(note);

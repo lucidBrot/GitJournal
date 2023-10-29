@@ -7,24 +7,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
-
 import 'package:gitjournal/analytics/analytics.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
 import 'package:gitjournal/iap/purchase_manager.dart';
 import 'package:gitjournal/iap/purchase_widget.dart';
+import 'package:gitjournal/iap/restore_purchase_button.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/logger/logger.dart';
-import 'package:gitjournal/screens/feature_timeline_screen.dart';
 import 'package:gitjournal/widgets/scroll_view_without_animation.dart';
-
-Set<String> _generateMonthlySkus() {
-  var list = <String>{};
-  for (var i = 0; i <= 25; i++) {
-    var _ = list.add("sku_monthly_min$i");
-  }
-  return list;
-}
 
 Set<String> _generateYearlySkus() {
   var list = <String>{};
@@ -42,8 +31,6 @@ class PurchaseScreen extends StatefulWidget {
 }
 
 class _PurchaseScreenState extends State<PurchaseScreen> {
-  String _minYearlyPurchase = "";
-
   @override
   void initState() {
     _fillMinYearPurchase();
@@ -63,72 +50,47 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
 
     if (!mounted) return;
     if (response.productDetails.isEmpty) return;
-
-    setState(() {
-      _minYearlyPurchase = response.productDetails.first.price;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
+      onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(tr(LocaleKeys.purchase_screen_title)),
+          title: Text(context.loc.purchaseScreenTitle),
         ),
         body: buildBody(context),
       ),
-      onWillPop: _onWillPop,
     );
   }
 
   Widget buildBody(BuildContext context) {
     Widget w = Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Padding(
           padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
           child: Text(
-            tr(LocaleKeys.purchase_screen_desc),
-            style: Theme.of(context).textTheme.bodyText2,
+            context.loc.purchaseScreenDesc,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
         ),
         const SizedBox(height: 32.0),
-        PurchaseCards(
+        const PurchaseCards(
           children: [
-            const SizedBox(width: 16.0),
-            const YearlyPurchaseWidget(),
-            const SizedBox(width: 16.0),
-            MonthlyRentalWidget(minYearlyPurchase: _minYearlyPurchase),
-            const SizedBox(width: 16.0),
+            SizedBox(width: 16.0),
+            YearlyPurchaseWidget(),
+            SizedBox(width: 16.0),
           ],
         ),
         const SizedBox(height: 32.0),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
-          child: Wrap(
-            children: [
-              const RestorePurchaseButton(),
-              OutlinedButton(
-                child: Text(
-                  tr(LocaleKeys.feature_timeline_title),
-                  style: Theme.of(context).textTheme.bodyText2,
-                ),
-                onPressed: () {
-                  var route = MaterialPageRoute(
-                    builder: (context) => const FeatureTimelineScreen(),
-                    settings: const RouteSettings(name: '/featureTimeline'),
-                  );
-                  var _ = Navigator.push(context, route);
-                },
-              ),
-            ],
-            alignment: WrapAlignment.spaceEvenly,
-            direction: Axis.horizontal,
-          ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+          child: RestorePurchaseButton(),
         ),
       ],
-      mainAxisAlignment: MainAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
     );
 
     return CustomScrollView(
@@ -147,49 +109,10 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
   }
 }
 
-class MonthlyRentalWidget extends StatelessWidget {
-  final String minYearlyPurchase;
-
-  const MonthlyRentalWidget({
-    Key? key,
-    required this.minYearlyPurchase,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    var textTheme = Theme.of(context).textTheme;
-
-    return PurchaseCard(
-      child: Column(
-        children: [
-          Text(
-            tr(LocaleKeys.purchase_screen_monthly_title),
-            style: textTheme.headline5,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32.0),
-          PurchaseWidget(
-            skus: _generateMonthlySkus(),
-            defaultSku: "sku_monthly_min3",
-            timePeriod: "Month",
-            isSubscription: true,
-          ),
-          const SizedBox(height: 32.0),
-          Text(tr(
-            LocaleKeys.purchase_screen_monthly_desc,
-            namedArgs: {'minYearlyPurchase': minYearlyPurchase},
-          )),
-        ],
-        mainAxisAlignment: MainAxisAlignment.start,
-      ),
-    );
-  }
-}
-
 class YearlyPurchaseWidget extends StatelessWidget {
   const YearlyPurchaseWidget({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -197,10 +120,11 @@ class YearlyPurchaseWidget extends StatelessWidget {
 
     return PurchaseCard(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Text(
-            tr(LocaleKeys.purchase_screen_oneTime_title),
-            style: textTheme.headline5,
+            context.loc.purchaseScreenOneTimeTitle,
+            style: textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32.0),
@@ -210,9 +134,8 @@ class YearlyPurchaseWidget extends StatelessWidget {
             isSubscription: false,
           ),
           const SizedBox(height: 32.0),
-          Text(tr(LocaleKeys.purchase_screen_oneTime_desc)),
+          Text(context.loc.purchaseScreenOneTimeDesc),
         ],
-        mainAxisAlignment: MainAxisAlignment.start,
       ),
     );
   }
@@ -253,8 +176,8 @@ class PurchaseCards extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: IntrinsicHeight(
         child: Row(
-          children: children,
           mainAxisSize: MainAxisSize.min,
+          children: children,
         ),
       ),
     );

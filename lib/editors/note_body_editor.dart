@@ -5,10 +5,7 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
-
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 
 class NoteBodyEditor extends StatelessWidget {
   final TextEditingController textController;
@@ -16,11 +13,11 @@ class NoteBodyEditor extends StatelessWidget {
   final Function onChanged;
 
   const NoteBodyEditor({
-    Key? key,
+    super.key,
     required this.textController,
     required this.autofocus,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +29,7 @@ class NoteBodyEditor extends StatelessWidget {
       maxLines: null,
       style: textStyle(context),
       decoration: InputDecoration(
-        hintText: tr(LocaleKeys.editors_common_defaultBodyHint),
+        hintText: context.loc.editorsCommonDefaultBodyHint,
         border: InputBorder.none,
         fillColor: theme.scaffoldBackgroundColor,
         hoverColor: theme.scaffoldBackgroundColor,
@@ -48,6 +45,6 @@ class NoteBodyEditor extends StatelessWidget {
 
   static TextStyle textStyle(BuildContext context) {
     var theme = Theme.of(context);
-    return theme.textTheme.subtitle1!;
+    return theme.textTheme.titleMedium!;
   }
 }

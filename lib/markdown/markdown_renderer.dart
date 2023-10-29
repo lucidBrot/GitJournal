@@ -6,20 +6,13 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:function_types/function_types.dart';
-import 'package:markdown/markdown.dart' as md;
-import 'package:path/path.dart' as p;
-import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import 'package:gitjournal/core/link.dart';
 import 'package:gitjournal/core/note.dart';
 import 'package:gitjournal/editors/note_body_editor.dart';
 import 'package:gitjournal/folder_views/common.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/markdown/parsers/hardwrap.dart';
 import 'package:gitjournal/markdown/parsers/html_entities_syntax.dart';
@@ -27,6 +20,11 @@ import 'package:gitjournal/settings/settings.dart';
 import 'package:gitjournal/utils/link_resolver.dart';
 import 'package:gitjournal/utils/utils.dart';
 import 'package:gitjournal/widgets/images/markdown_image.dart';
+import 'package:markdown/markdown.dart' as md;
+import 'package:path/path.dart' as p;
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'builders/katex_builder.dart';
 
 class MarkdownRenderer extends StatelessWidget {
@@ -34,10 +32,10 @@ class MarkdownRenderer extends StatelessWidget {
   final Func1<Note, void> onNoteTapped;
 
   const MarkdownRenderer({
-    Key? key,
+    super.key,
     required this.note,
     required this.onNoteTapped,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +43,7 @@ class MarkdownRenderer extends StatelessWidget {
     var settings = Provider.of<Settings>(context);
     theme = theme.copyWith(
       textTheme: theme.textTheme.copyWith(
-        subtitle1: theme.textTheme.subtitle1,
+        titleMedium: theme.textTheme.titleMedium,
       ),
     );
 
@@ -55,10 +53,10 @@ class MarkdownRenderer extends StatelessWidget {
     // p is changed
     var markdownStyleSheet = MarkdownStyleSheet.fromTheme(theme).copyWith(
       p: NoteBodyEditor.textStyle(context),
-      code: theme.textTheme.bodyText2!.copyWith(
+      code: theme.textTheme.bodyMedium!.copyWith(
         backgroundColor: theme.dialogBackgroundColor,
         fontFamily: 'monospace',
-        fontSize: theme.textTheme.bodyText2!.fontSize! * 0.85,
+        fontSize: theme.textTheme.bodyMedium!.fontSize! * 0.85,
       ),
       tableBorder: TableBorder.all(color: theme.highlightColor, width: 0),
       tableCellsDecoration: BoxDecoration(color: theme.dialogBackgroundColor),
@@ -75,7 +73,7 @@ class MarkdownRenderer extends StatelessWidget {
         color: theme.primaryColorLight,
         borderRadius: BorderRadius.circular(2.0),
       ),
-      checkbox: theme.textTheme.bodyText2!.copyWith(
+      checkbox: theme.textTheme.bodyMedium!.copyWith(
         color: isDark ? theme.primaryColorLight : theme.primaryColor,
       ),
     );
@@ -99,7 +97,7 @@ class MarkdownRenderer extends StatelessWidget {
           if (!opened) {
             showErrorMessageSnackbar(
               context,
-              tr(LocaleKeys.widgets_NoteViewer_linkInvalid, args: [link]),
+              context.loc.widgetsNoteViewerLinkInvalid(link),
             );
           }
           return;
@@ -107,12 +105,15 @@ class MarkdownRenderer extends StatelessWidget {
 
         // External Link
         try {
-          var _ = await launch(link);
+          var _ = await launchUrl(
+            Uri.parse(link),
+            mode: LaunchMode.externalApplication,
+          );
         } catch (e, stackTrace) {
           Log.e('Opening Link', ex: e, stacktrace: stackTrace);
           showErrorMessageSnackbar(
             context,
-            tr(LocaleKeys.widgets_NoteViewer_linkNotFound, args: [link]),
+            context.loc.widgetsNoteViewerLinkNotFound(link),
           );
         }
       },
@@ -135,7 +136,6 @@ class MarkdownRenderer extends StatelessWidget {
       HtmlEntitiesSyntax(),
       if (hardWrapEnabled) HardWrapSyntax(),
       WikiLinkSyntax(),
-      TaskListSyntax(),
       ...md.ExtensionSet.gitHubFlavored.inlineSyntaxes,
       KatexBuilder.inlineParser,
     ];

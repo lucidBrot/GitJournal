@@ -5,10 +5,6 @@
  */
 
 import 'package:flutter/material.dart';
-
-import 'package:easy_localization/easy_localization.dart';
-import 'package:provider/provider.dart';
-
 import 'package:gitjournal/core/folder/notes_folder_fs.dart';
 import 'package:gitjournal/core/image.dart' as core;
 import 'package:gitjournal/core/image.dart';
@@ -21,11 +17,13 @@ import 'package:gitjournal/editors/common.dart';
 import 'package:gitjournal/editors/editor_scroll_view.dart';
 import 'package:gitjournal/editors/undo_redo.dart';
 import 'package:gitjournal/editors/utils/disposable_change_notifier.dart';
-import 'package:gitjournal/generated/locale_keys.g.dart';
+import 'package:gitjournal/l10n.dart';
 import 'package:gitjournal/logger/logger.dart';
 import 'package:gitjournal/settings/app_config.dart';
 import 'package:gitjournal/utils/utils.dart';
 import 'package:gitjournal/widgets/future_builder_with_progress.dart';
+import 'package:provider/provider.dart';
+
 import 'controllers/rich_text_controller.dart';
 
 class RawEditor extends StatefulWidget implements Editor {
@@ -40,14 +38,14 @@ class RawEditor extends StatefulWidget implements Editor {
   final ThemeData theme;
 
   const RawEditor({
-    Key? key,
+    super.key,
     required this.note,
     required this.noteModified,
     required this.editMode,
     required this.highlightString,
     required this.theme,
     required this.common,
-  }) : super(key: key);
+  });
 
   @override
   RawEditorState createState() {
@@ -240,18 +238,18 @@ class _NoteEditor extends StatefulWidget {
   final Function onChanged;
 
   const _NoteEditor({
-    Key? key,
+    super.key,
     required this.textController,
     required this.autofocus,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<_NoteEditor> createState() => _NoteEditorState();
 
   static TextStyle textStyle(BuildContext context) {
     var theme = Theme.of(context);
-    return theme.textTheme.subtitle1!.copyWith(fontFamily: "Roboto Mono");
+    return theme.textTheme.titleMedium!.copyWith(fontFamily: "Roboto Mono");
   }
 }
 
@@ -279,7 +277,7 @@ class _NoteEditorState extends State<_NoteEditor> {
       maxLines: null,
       style: _NoteEditor.textStyle(context),
       decoration: InputDecoration(
-        hintText: tr(LocaleKeys.editors_common_defaultBodyHint),
+        hintText: context.loc.editorsCommonDefaultBodyHint,
         border: InputBorder.none,
         isDense: true,
         fillColor: theme.scaffoldBackgroundColor,
@@ -309,8 +307,8 @@ class _NoteEditorState extends State<_NoteEditor> {
         textFieldKey: _textFieldKey,
         textFieldFocusNode: _focusNode,
         textController: widget.textController,
-        child: textField,
         tags: allTags.toList(),
+        child: textField,
       );
     }
 
