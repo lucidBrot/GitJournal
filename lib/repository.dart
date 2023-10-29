@@ -340,6 +340,10 @@ class GitJournalRepo with ChangeNotifier {
 
   Future<void> syncNotes({bool doNotThrow = false}) async {
     // This is extremely slow with dart-git, can take over a second!
+    
+    // LB: This might be related to issue #595 with slow startup in my case
+    //     I do not have a remote repo, so maybe that is smth extraordinarily
+    //     slow with dart-git? Just a hypothesis.
     if (_shouldCheckForChanges()) {
       var repoR = await GitAsyncRepository.load(repoPath);
       if (repoR.isFailure) {
