@@ -340,23 +340,31 @@ class GitJournalRepo with ChangeNotifier {
 
   Future<void> syncNotes({bool doNotThrow = false}) async {
     // This is extremely slow with dart-git, can take over a second!
-    
+
     // LB: This might be related to issue #595 with slow startup in my case
     //     I do not have a remote repo, so maybe that is smth extraordinarily
     //     slow with dart-git? Just a hypothesis.
-    if (_shouldCheckForChanges()) {
+    if (_shouldCheckForChanges()) { // returns True if it uses external SD
+      final stopwatch1 = Stopwatch()..start();
+
       var repoR = await GitAsyncRepository.load(repoPath);
       if (repoR.isFailure) {
         Log.e("SyncNotes Failed to Load Repo", result: repoR);
+        Log.d("The shouldCheckForChanges() if-block inside took ${(stopwatch1..stop()).elapsed}");
         return;
       }
       var repo = repoR.getOrThrow();
       await _commitUnTrackedChanges(repo, gitConfig).throwOnError();
+      Log.d("The shouldCheckForChanges() if-block inside took ${(stopwatch1..stop()).elapsed}, with a non-failing repo.");
     }
 
+    // LB: why is this check not happening earlier?
+    //     What is the _loadNotes() doing?
     if (!remoteGitRepoConfigured) {
       Log.d("Not syncing because RemoteRepo not configured");
-      await _loadNotes();
+      final stopwatch2 = Stopwatch()..start();
+      await _loadNotes(); // LB: maybe the caching in here is what is slow.
+      Log.d("The _loadNotes() call took ${(stopwatch2..stop()).elapsed}, with a non-failing repo.");
       return;
     }
 
