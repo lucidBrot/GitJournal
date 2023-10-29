@@ -1042,6 +1042,9 @@ Future<void> _ensureOneCommitInRepo({
 
 Future<Result<void>> _commitUnTrackedChanges(
     GitAsyncRepository repo, GitConfig gitConfig) async {
+  // TODO: remove this line again, it is just for testing performance increase by no-opping this function.
+  return Result(null);
+
   var timer = Stopwatch()..start();
   //
   // Check for un-committed files and save them
