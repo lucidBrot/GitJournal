@@ -176,8 +176,10 @@ class GitJournalRepo with ChangeNotifier {
     var repo = repoR.getOrThrow();
     var remoteConfigured = repo.config.remotes.isNotEmpty;
 
-    if (!storageConfig.storeInternally) {
+    if (!storageConfig.storeInternally) { // LB: TODO Can I skip this commit when sync on boot is false?
+      final stopwatch = Stopwatch()..start();
       var r = await _commitUnTrackedChanges(repo, gitConfig);
+      Log.d("_commitUnTrackedChanges 1 took ${(stopwatch..stop()).elapsed}.");
       if (r.isFailure) {
         return fail(r);
       }
@@ -291,7 +293,9 @@ class GitJournalRepo with ChangeNotifier {
           var ex = r.error as FileStorageCacheIncomplete;
           Log.i("FileStorageCacheIncomplete ${ex.path}");
           var repo = await GitAsyncRepository.load(repoPath).getOrThrow();
+          final stopwatch = Stopwatch();
           await _commitUnTrackedChanges(repo, gitConfig).throwOnError();
+          Log.d("_commitUnTrackedChanges in _loadNotes took ${(stopwatch..stop()).elapsed}.");
           await _resetFileStorage();
           return;
         }
