@@ -362,7 +362,7 @@ class GitJournalRepo with ChangeNotifier {
       //     _loadFromCache took 1 second
       //     _loadFromCache took 3 seconds -- why was it called twice?
       //     The _commitUnTrackedChanges takes 5 seconds.
-      /*
+      /* // Excerpt from the emulator logs:
       I/flutter (11036): D JournalAppState._initShareSubscriptions.<ac>: Received MediaFile Share with App (media): []
       D/EGL_emulation(11036): eglMakeCurrent: 0xf327f5e0: ver 2 0 (tinfo 0xf3289fc0)
       D/eglCodecCommon(11036): setVertexArrayObject: set vao to 0 (0) 1 0
@@ -380,7 +380,7 @@ class GitJournalRepo with ChangeNotifier {
        */
       Log.d("The shouldCheckForChanges() if-block inside took ${(stopwatch1..stop()).elapsed}, with a non-failing repo.");
     } else {
-      Log.d("Not checking for changes.");
+      Log.d("Not checking for changes. ${(skipCheckingForChanges ? 'Because skipCheckingForChanges == True.' : '')}");
     }
 
     // LB: why is this check not happening earlier?
