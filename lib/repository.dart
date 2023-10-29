@@ -338,13 +338,13 @@ class GitJournalRepo with ChangeNotifier {
     return !storageConfig.storeInternally;
   }
 
-  Future<void> syncNotes({bool doNotThrow = false}) async {
+  Future<void> syncNotes({bool doNotThrow = false, bool skipCheckingForChanges = true}) async {
     // This is extremely slow with dart-git, can take over a second!
 
     // LB: This might be related to issue #595 with slow startup in my case
     //     I do not have a remote repo, so maybe that is smth extraordinarily
     //     slow with dart-git? Just a hypothesis.
-    if (_shouldCheckForChanges()) { // returns True if it uses external SD
+    if (!skipCheckingForChanges && _shouldCheckForChanges()) { // returns True if it uses external SD
       final stopwatch1 = Stopwatch()..start();
 
       var repoR = await GitAsyncRepository.load(repoPath);
@@ -357,10 +357,11 @@ class GitJournalRepo with ChangeNotifier {
       var repo = repoR.getOrThrow();
       await _commitUnTrackedChanges(repo, gitConfig).throwOnError();
 
-      // LB: this took 5 seconds when using my many-files folder.
+      // LB: this took >5 seconds when using my many-files folder.
       //      (120 files, 74 folders, 187MB. That should not take so long!)
       //     _loadFromCache took 1 second
       //     _loadFromCache took 3 seconds -- why was it called twice?
+      //     The _commitUnTrackedChanges takes 5 seconds.
       /*
       I/flutter (11036): D JournalAppState._initShareSubscriptions.<ac>: Received MediaFile Share with App (media): []
       D/EGL_emulation(11036): eglMakeCurrent: 0xf327f5e0: ver 2 0 (tinfo 0xf3289fc0)
@@ -383,7 +384,8 @@ class GitJournalRepo with ChangeNotifier {
     }
 
     // LB: why is this check not happening earlier?
-    //     What is the _loadNotes() doing?
+    //     I guess because the local repo still exists and should
+    //     still get commits in case something changed on disk?
     if (!remoteGitRepoConfigured) {
       Log.d("Not syncing because RemoteRepo not configured");
       final stopwatch2 = Stopwatch()..start();
