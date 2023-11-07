@@ -26,7 +26,7 @@ dependencies:
     git: https://github.com/MathGaps/d3-force-flutter.git
   dart_date: ^1.1.1
   dart_git:
-    git: https://github.com/GitJournal/dart-git.git
+    path: "N:/Projects/Forks/dart-git"
   device_info_plus: ^9.0.2
   dio: ^4.0.6
   dio_smart_retry: ^1.2.0

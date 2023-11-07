@@ -342,7 +342,7 @@ class GitJournalRepo with ChangeNotifier {
     return !storageConfig.storeInternally;
   }
 
-  Future<void> syncNotes({bool doNotThrow = false, bool skipCheckingForChanges = true}) async {
+  Future<void> syncNotes({bool doNotThrow = false, bool skipCheckingForChanges = false}) async {
     // This is extremely slow with dart-git, can take over a second!
 
     // LB: This might be related to issue #595 with slow startup in my case

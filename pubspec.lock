@@ -398,11 +398,9 @@ packages:
   dart_git:
     dependency: "direct main"
     description:
-      path: "."
-      ref: HEAD
-      resolved-ref: "8edf1964eb2961515608a0249df6bbdf29bcba31"
-      url: "https://github.com/GitJournal/dart-git.git"
-    source: git
+      path: "N:/Projects/Forks/dart-git"
+      relative: false
+    source: path
     version: "0.0.2"
   dart_style:
     dependency: transitive
