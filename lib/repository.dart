@@ -1044,11 +1044,6 @@ Future<Result<void>> _commitUnTrackedChanges(
     GitAsyncRepository repo, GitConfig gitConfig) async {
 
   var timer = Stopwatch()..start();
-  var debugging_speedup_skip_add = true;
-  if (debugging_speedup_skip_add){
-    Log.i('_commitUntracked Skipping due to Debug Setting.: ${timer.elapsed}');
-    return Result(null);
-  }
   //
   // Check for un-committed files and save them
   //
