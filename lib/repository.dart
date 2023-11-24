@@ -335,6 +335,9 @@ class GitJournalRepo with ChangeNotifier {
   }
 
   bool _shouldCheckForChanges() {
+    // This reduces a 4-13 seconds _commitUncommited duration to 1 second.
+    //return false;
+
     if (Platform.isAndroid || Platform.isIOS) {
       return !storageConfig.storeInternally;
     }
@@ -366,6 +369,7 @@ class GitJournalRepo with ChangeNotifier {
       //     _loadFromCache took 1 second
       //     _loadFromCache took 3 seconds -- why was it called twice?
       //     The _commitUnTrackedChanges takes 5 seconds.
+      // ... but maybe this is just because of async stuff counting time weirdly.
       /* // Excerpt from the emulator logs:
       I/flutter (11036): D JournalAppState._initShareSubscriptions.<ac>: Received MediaFile Share with App (media): []
       D/EGL_emulation(11036): eglMakeCurrent: 0xf327f5e0: ver 2 0 (tinfo 0xf3289fc0)
@@ -382,6 +386,7 @@ class GitJournalRepo with ChangeNotifier {
       I/flutter (11036): D GitJournalRepo.syncNotes: Not syncing because RemoteRepo not configured
       I/flutter (11036): D GitJournalRepo.syncNotes: The _loadNotes() call took 0:00:00.048981, with a non-failing repo.
        */
+      //      one time it even took 13 seconds. But how much is async/await interfering with the measurements?
       Log.d("The shouldCheckForChanges() if-block inside took ${(stopwatch1..stop()).elapsed}, with a non-failing repo.");
     } else {
       Log.d("Not checking for changes. ${(skipCheckingForChanges ? 'Because skipCheckingForChanges == True.' : '')}");

@@ -42,11 +42,13 @@ class GitNoteRepository {
 
   Future<Result<void>> _add(String pathSpec) async {
     if (useDartGit || AppConfig.instance.experimentalGitOps) {
+      Log.d('git_repo#_add(): using dart-git');
       var repo = await GitAsyncRepository.load(gitRepoPath).getOrThrow();
       await repo.add(pathSpec).throwOnError();
       return Result(null);
     } else {
       try {
+        Log.d('git_repo#_add(): NOT using dart-git?');
         await _gitRepo.add(pathSpec);
       } catch (ex, st) {
         return Result.fail(ex, st);
