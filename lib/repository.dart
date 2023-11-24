@@ -336,7 +336,7 @@ class GitJournalRepo with ChangeNotifier {
 
   bool _shouldCheckForChanges() {
     // This reduces a 4-13 seconds _commitUncommited duration to 1 second.
-    //return false;
+    return false;
 
     if (Platform.isAndroid || Platform.isIOS) {
       return !storageConfig.storeInternally;
