@@ -29,16 +29,19 @@ Future<void> main() async {
     await reportError(isolateError.first, isolateError.last);
   }).sendPort);
 
-  if (Platform.isIOS || Platform.isAndroid) {
-    await FlutterDisplayMode.setHighRefreshRate();
-  }
-
   await runZonedGuarded(() async {
     await Chain.capture(() async {
+      // ensureInitialized() must be run inside the same zone as runApp()
+      //    which is inside the app.dart JournalApp.main()
       var _ = WidgetsFlutterBinding.ensureInitialized();
-
       var pref = await SharedPreferences.getInstance();
       AppConfig.instance.load(pref);
+
+      if (Platform.isIOS || Platform.isAndroid) {
+        // requires ensureInitialized() to have been run before.
+        await FlutterDisplayMode.setHighRefreshRate();
+      }
+
       await JournalApp.main(pref);
     });
   }, reportError);

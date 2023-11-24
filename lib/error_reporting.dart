@@ -74,6 +74,7 @@ Future<SentryEvent> get _environmentEvent async {
 }
 
 void flutterOnErrorHandler(FlutterErrorDetails details) {
+  Log.e("Custom flutterOnErrorHandle called!");
   if (reportCrashes == true) {
     // vHanda: This doesn't always call our zone error handler, why?
     // Zone.current.handleUncaughtError(details.exception, details.stack);
