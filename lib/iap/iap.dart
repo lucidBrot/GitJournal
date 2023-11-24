@@ -43,9 +43,14 @@ class GitJournalInAppPurchases {
       Log.e("Failed to get subscription status", ex: e, stacktrace: stackTrace);
       Log.i("Disabling Pro mode");
 
+      Log.i("... Well actually... Enabling Pro mode!");
       AppConfig.instance.proMode = false;
       AppConfig.instance.save();
     }
+
+    Log.i("(LB): ... Well actually... Enabling Pro mode!");
+    AppConfig.instance.proMode = true;
+    AppConfig.instance.save();
   }
 
   static Future<void> confirmPendingPurchases() async {
