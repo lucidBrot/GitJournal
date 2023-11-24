@@ -17,10 +17,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 Future<void> main() async {
-  var _ = WidgetsFlutterBinding.ensureInitialized();
-
-  var pref = await SharedPreferences.getInstance();
-  AppConfig.instance.load(pref);
 
   FlutterError.onError = flutterOnErrorHandler;
 
@@ -39,6 +35,10 @@ Future<void> main() async {
 
   await runZonedGuarded(() async {
     await Chain.capture(() async {
+      var _ = WidgetsFlutterBinding.ensureInitialized();
+
+      var pref = await SharedPreferences.getInstance();
+      AppConfig.instance.load(pref);
       await JournalApp.main(pref);
     });
   }, reportError);
