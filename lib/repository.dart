@@ -1016,7 +1016,6 @@ Future<Result<void>> _commitUnTrackedChanges(
   // Check for un-committed files and save them
   //
   var addR = await repo.add('.');
-  Log.d('_commitUntracked add(".") already took: ${timer.elapsed}');
   if (addR.isFailure) {
     return fail(addR);
   }
