@@ -340,51 +340,21 @@ class GitJournalRepo with ChangeNotifier {
     return !storageConfig.storeInternally;
   }
 
-  Future<void> syncNotes({bool doNotThrow = false, bool skipCheckingForChanges = false}) async {
+  Future<void> syncNotes({bool doNotThrow = false}) async {
     // This is extremely slow with dart-git, can take over a second!
 
-    // LB: This might be related to issue #595 with slow startup in my case
-    //     I do not have a remote repo, so maybe that is smth extraordinarily
-    //     slow with dart-git? Just a hypothesis.
-    if (!skipCheckingForChanges && _shouldCheckForChanges()) { // returns True if it uses external SD
+    if (_shouldCheckForChanges()) { // returns True if it uses external SD
       final stopwatch1 = Stopwatch()..start();
 
       var repoR = await GitAsyncRepository.load(repoPath);
       if (repoR.isFailure) {
         Log.e("SyncNotes Failed to Load Repo", result: repoR);
-        Log.d("The shouldCheckForChanges() if-block inside took ${(stopwatch1..stop()).elapsed}");
         return;
       }
 
       var repo = repoR.getOrThrow();
       await _commitUnTrackedChanges(repo, gitConfig).throwOnError();
 
-      // LB: this took >5 seconds when using my many-files folder.
-      //      (120 files, 74 folders, 187MB. That should not take so long!)
-      //     _loadFromCache took 1 second
-      //     _loadFromCache took 3 seconds -- why was it called twice?
-      //     The _commitUnTrackedChanges takes 5 seconds.
-      // ... but maybe this is just because of async stuff counting time weirdly.
-      /* // Excerpt from the emulator logs:
-      I/flutter (11036): D JournalAppState._initShareSubscriptions.<ac>: Received MediaFile Share with App (media): []
-      D/EGL_emulation(11036): eglMakeCurrent: 0xf327f5e0: ver 2 0 (tinfo 0xf3289fc0)
-      D/eglCodecCommon(11036): setVertexArrayObject: set vao to 0 (0) 1 0
-      I/flutter (11036): I NotesCache.load: Notes Cache Loaded: 10 items
-      I/flutter (11036): I GitJournalRepo._loadFromCache: Finished loading the notes cache - 0:00:01.334654
-      I/flutter (11036): I GitJournalRepo.__fillFileStorageCache: Built Git Time Cache - 0:00:00.106794
-      I/flutter (11036): D FileStorageCache.save.<ac>: Saving MTimeCache: 130 items
-      I/flutter (11036): D FileStorageCache.save.<ac>: Saving CTimeCache: 136 items
-      I/flutter (11036): I NotesMaterializedView.fetch.<ac>.<ac>: Loading View 0_summary_v2: 0:00:00.303563
-      I/flutter (11036): I GitJournalRepo._loadFromCache: Finished loading all the notes - 0:00:03.196066
-      I/flutter (11036): I _commitUnTrackedChanges: _commitUntracked: 0:00:05.019550
-      I/flutter (11036): D GitJournalRepo.syncNotes: The shouldCheckForChanges() if-block inside took 0:00:05.065976, with a non-failing repo.
-      I/flutter (11036): D GitJournalRepo.syncNotes: Not syncing because RemoteRepo not configured
-      I/flutter (11036): D GitJournalRepo.syncNotes: The _loadNotes() call took 0:00:00.048981, with a non-failing repo.
-       */
-      //      one time it even took 13 seconds. But how much is async/await interfering with the measurements?
-      Log.d("The shouldCheckForChanges() if-block inside took ${(stopwatch1..stop()).elapsed}, with a non-failing repo.");
-    } else {
-      Log.d("Not checking for changes. ${(skipCheckingForChanges ? 'Because skipCheckingForChanges == True.' : '')}");
     }
 
     // LB: why is this check not happening earlier?
@@ -392,9 +362,7 @@ class GitJournalRepo with ChangeNotifier {
     //     still get commits in case something changed on disk?
     if (!remoteGitRepoConfigured) {
       Log.d("Not syncing because RemoteRepo not configured");
-      final stopwatch2 = Stopwatch()..start();
-      await _loadNotes(); // LB: maybe the caching in here is what is slow.
-      Log.d("The _loadNotes() call took ${(stopwatch2..stop()).elapsed}, with a non-failing repo.");
+      await _loadNotes();
       return;
     }
 
