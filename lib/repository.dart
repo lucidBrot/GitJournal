@@ -176,10 +176,8 @@ class GitJournalRepo with ChangeNotifier {
     var repo = repoR.getOrThrow();
     var remoteConfigured = repo.config.remotes.isNotEmpty;
 
-    if (!storageConfig.storeInternally) { // LB: TODO Can I skip this commit when sync on boot is false?
-      final stopwatch = Stopwatch()..start();
+    if (!storageConfig.storeInternally) {
       var r = await _commitUnTrackedChanges(repo, gitConfig);
-      Log.d("_commitUnTrackedChanges 1 took ${(stopwatch..stop()).elapsed}.");
       if (r.isFailure) {
         return fail(r);
       }
@@ -335,9 +333,6 @@ class GitJournalRepo with ChangeNotifier {
   }
 
   bool _shouldCheckForChanges() {
-    // This reduces a 4-13 seconds _commitUncommited duration to 1 second.
-    //return false;
-
     if (Platform.isAndroid || Platform.isIOS) {
       return !storageConfig.storeInternally;
     }
