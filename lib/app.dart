@@ -59,18 +59,14 @@ class JournalApp extends StatefulWidget {
     Hive.registerAdapter(LinkAdapter());
     Hive.registerAdapter(LinksListAdapter());
 
-    final stopwatch1 = Stopwatch()..start();
     var repoManager = RepositoryManager(
       gitBaseDir: gitBaseDirectory,
       cacheDir: cacheDir,
       pref: pref,
     );
-    Log.d("app.dart: Created repoManager in ${(stopwatch1).elapsed}"); //essentially no time.
-    stopwatch1.reset();
 
     // Ignore the error, the router will show an error screen
     var _ = await repoManager.buildActiveRepository();
-    Log.d("app.dart: Built active repository in ${(stopwatch1..stop()).elapsed}");
 
     GitJournalInAppPurchases.confirmProPurchaseBoot();
 
