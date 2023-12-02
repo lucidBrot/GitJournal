@@ -29,8 +29,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import 'package:saf/saf.dart';
 import 'package:universal_io/io.dart';
+import 'package:shared_storage/shared_storage.dart' as saf;
 
 class SettingsStorageScreen extends StatelessWidget {
   static const routePath = '/settings/storage';
@@ -235,12 +235,20 @@ Future<String> _getExternalDir(BuildContext context) async {
   // e.g. 29 for Android 10.
   Log.i("Android release $release has SDK int $sdkInt .");
   if (sdkInt >= 29){
+    final Uri? grantedUri = await saf.openDocumentTree();
+    if (grantedUri != null) {
+      Log.i('Permission granted for Uri: $grantedUri');
+      return grantedUri.toFilePath();
+    }
+    Log.e("Permission not granted for $grantedUri.");
+    return "";
+
+    /*
     var dir = await FilePicker.platform.getDirectoryPath();
     if (dir == null){
       Log.e("No directory Path received.");
       return "";
     }
-    var saf = Saf(dir);
     bool? isGranted = await saf.getDirectoryPermission(isDynamic: true);
     if (isGranted != null && isGranted) {
       // All is good. We could perform some file operations.
@@ -254,6 +262,7 @@ Future<String> _getExternalDir(BuildContext context) async {
       );
       return "";
     }
+    */
   } else {
       if (!await Permission.storage
           .request()
