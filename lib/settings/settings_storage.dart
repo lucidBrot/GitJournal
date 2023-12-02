@@ -151,22 +151,22 @@ class SettingsStorageScreen extends StatelessWidget {
                 // debug: attempt to create a file in that dir:
                 saf.DocumentFile? df = await saf.DocumentFile.fromTreeUri(path_uri);
                 df?.createFile(mimeType: "text/plain", displayName: "myDebugFile", content: "testing");
-                File("$path_uri/debug1.txt").writeAsString("contents here");
 
-                // assert (path_uri.scheme.toLowerCase() == "content");
-                // var android_prefix = "/tree";
-                // var my_prefix = '/storage';
-                // Log.i("path_uri.path is ${path_uri.path}");
-                // // LB: This content-uri to path conversion is highly unreliable. And even if it works, something permissions fails..
                 // /*
                 //    > If you have an uri permission you have permission to use that uri.
                 //    > This does not mean that if you manage to find its file system path that you have permission for that path.
                 //    https://stackoverflow.com/questions/70072550/android-11-scoped-storage-unable-to-use-java-io-file-even-after-uri-permissi#comment123897693_70072550
                 //  */
-                // var path = path_uri.path.replaceFirst("%3A","/").replaceFirst(android_prefix, my_prefix);
                 String path = path_uri.toString();
                 Log.i("Moving repo to $path");
 
+                // debug to-string from-string stuff...
+                var reparsed = Uri.parse(path).toString();
+                if (reparsed != path){
+                  Log.i("Somehow $reparsed != $path");
+                } else {
+                  Log.i("Same: $reparsed == $path");
+                }
 
                 storageConfig.storeInternally = false;
                 storageConfig.storageLocation = path;
