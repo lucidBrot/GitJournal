@@ -5,6 +5,7 @@
  */
 
 import 'package:android_external_storage/android_external_storage.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:gitjournal/core/folder/notes_folder_config.dart';
@@ -28,6 +29,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:saf/saf.dart';
 import 'package:universal_io/io.dart';
 
 class SettingsStorageScreen extends StatelessWidget {
@@ -136,6 +138,7 @@ class SettingsStorageScreen extends StatelessWidget {
                 await moveBackToInternal(false);
               } else {
                 var path = await _getExternalDir(context);
+                Log.i("Path in external dir is $path");
                 if (path.isEmpty) {
                   await moveBackToInternal(false);
                   return;
@@ -225,49 +228,81 @@ Future<bool> _isDirWritable(String path) async {
 }
 
 Future<String> _getExternalDir(BuildContext context) async {
-  if (!await Permission.storage.request().isGranted) {
-    Log.e("Storage Permission Denied");
-    showErrorMessageSnackbar(
-      context,
-      context.loc.settingsStoragePermissionFailed,
-    );
-    return "";
-  }
-
-  var dir = await FilePicker.platform.getDirectoryPath();
-  if (dir != null && dir.isNotEmpty) {
-    if (await _isDirWritable(dir)) {
+  var androidInfo = await DeviceInfoPlugin().androidInfo;
+  var release = androidInfo.version.release; // E.g. the string "11" for Android 11
+  var sdkInt = androidInfo.version.sdkInt;  // this seems more reliable
+  // https://developer.android.com/reference/android/os/Build.VERSION.html
+  // e.g. 29 for Android 10.
+  Log.i("Android release $release has SDK int $sdkInt .");
+  if (sdkInt >= 29){
+    var dir = await FilePicker.platform.getDirectoryPath();
+    if (dir == null){
+      Log.e("No directory Path received.");
+      return "";
+    }
+    var saf = Saf(dir);
+    bool? isGranted = await saf.getDirectoryPermission(isDynamic: true);
+    if (isGranted != null && isGranted) {
+      // All is good. We could perform some file operations.
       return dir;
     } else {
-      Log.e("FilePicker: Got $dir but it is not writable");
+      // failed to get the permission
+      Log.e("Permission not granted for $dir. isGranted: $isGranted");
       showErrorMessageSnackbar(
         context,
         context.loc.settingsStorageNotWritable(dir),
       );
+      return "";
     }
+  } else {
+      if (!await Permission.storage
+          .request()
+          .isGranted) {
+        // on android 13 this will fail silently.
+        Log.e("Storage Permission Denied");
+        showErrorMessageSnackbar(
+          context,
+          context.loc.settingsStoragePermissionFailed,
+        );
+        return "";
+      }
+      var dir = await FilePicker.platform.getDirectoryPath();
+
+      if (dir != null && dir.isNotEmpty) {
+        if (await _isDirWritable(dir)) {
+          return dir;
+        } else {
+          Log.e("FilePicker: Got $dir but it is not writable");
+          showErrorMessageSnackbar(
+            context,
+            context.loc.settingsStorageNotWritable(dir),
+          );
+          return "";
+        }
+      }
+
+      var path = await AndroidExternalStorage.getExternalStorageDirectory();
+      if (path != null) {
+        if (await _isDirWritable(path)) {
+          return path;
+        } else {
+          Log.e("ExtStorage: Got $path but it is not writable");
+        }
+      }
+
+      var extDir = await getExternalStorageDirectory();
+      if (extDir != null) {
+        path = extDir.path;
+
+        if (await _isDirWritable(path)) {
+          return path;
+        } else {
+          Log.e("ExternalStorageDirectory: Got $path but it is not writable");
+        }
+      }
+
+      return "";
   }
-
-  var path = await AndroidExternalStorage.getExternalStorageDirectory();
-  if (path != null) {
-    if (await _isDirWritable(path)) {
-      return path;
-    } else {
-      Log.e("ExtStorage: Got $path but it is not writable");
-    }
-  }
-
-  var extDir = await getExternalStorageDirectory();
-  if (extDir != null) {
-    path = extDir.path;
-
-    if (await _isDirWritable(path)) {
-      return path;
-    } else {
-      Log.e("ExternalStorageDirectory: Got $path but it is not writable");
-    }
-  }
-
-  return "";
 }
 
 class DefaultNoteFolderTile extends StatelessWidget {
