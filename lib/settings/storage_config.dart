@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:icloud_documents_path/icloud_documents_path.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_storage/shared_storage.dart' as saf;
 import 'package:universal_io/io.dart' show Platform;
 
 import 'package:gitjournal/settings/settings_sharedpref.dart';
@@ -90,6 +91,15 @@ class StorageConfig extends ChangeNotifier with SettingsSharedPref {
     }
 
     var repoPath = p.join(storageLocation, folderName);
+
+    // debug: attempt to create a file in that dir:
+    saf.DocumentFile? df = await saf.DocumentFile.fromTreeUri(Uri.parse("$repoPath/lmaodir"));
+    df?.createFile(mimeType: "text/plain", displayName: "myDebugFile2", content: "testing2");
+    // if this works, this shows that I can write to the child directory after loading my url from string.
+    // ... but this actually creates lmaodir, but then the myDebugFile2.txt is created outside of it??
+    // TODO: WTF?
+    // TODO: And how do I avoid a new .txt ending??
+
     return repoPath.endsWith(p.separator) ? repoPath : repoPath + p.separator;
   }
 }

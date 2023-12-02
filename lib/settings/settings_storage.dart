@@ -151,6 +151,7 @@ class SettingsStorageScreen extends StatelessWidget {
                 // debug: attempt to create a file in that dir:
                 saf.DocumentFile? df = await saf.DocumentFile.fromTreeUri(path_uri);
                 df?.createFile(mimeType: "text/plain", displayName: "myDebugFile", content: "testing");
+                df?.createDirectory("lmaodir");
 
                 // /*
                 //    > If you have an uri permission you have permission to use that uri.
@@ -159,14 +160,6 @@ class SettingsStorageScreen extends StatelessWidget {
                 //  */
                 String path = path_uri.toString();
                 Log.i("Moving repo to $path");
-
-                // debug to-string from-string stuff...
-                var reparsed = Uri.parse(path).toString();
-                if (reparsed != path){
-                  Log.i("Somehow $reparsed != $path");
-                } else {
-                  Log.i("Same: $reparsed == $path");
-                }
 
                 storageConfig.storeInternally = false;
                 storageConfig.storageLocation = path;
