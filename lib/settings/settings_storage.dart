@@ -159,6 +159,7 @@ class SettingsStorageScreen extends StatelessWidget {
                 //    https://stackoverflow.com/questions/70072550/android-11-scoped-storage-unable-to-use-java-io-file-even-after-uri-permissi#comment123897693_70072550
                 //  */
                 String path = path_uri.toString();
+                path = "/storage/6F63-1277/priv-notes-lucid";
                 Log.i("Moving repo to $path");
 
                 storageConfig.storeInternally = false;

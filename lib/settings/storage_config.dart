@@ -92,15 +92,6 @@ class StorageConfig extends ChangeNotifier with SettingsSharedPref {
 
     var repoPath = p.join(storageLocation, folderName);
 
-    // debug: attempt to create a file in that dir:
-    saf.DocumentFile? df = await Uri.parse("$repoPath/lmaodir").toDocumentFile();
-    df?.createFile(mimeType: "text/plain", displayName: "myDebugFile2", content: "testing2");
-    // if this works, this shows that I can write to the child directory after loading my url from string.
-    // ... but this actually creates lmaodir, but then the myDebugFile2.txt is created outside of it??
-    // TODO: WTF?
-    //    Maybe related: https://stackoverflow.com/questions/58186014/saf-file-written-in-parent-folder-not-in-the-right-path
-    // TODO: And how do I avoid a new .txt ending??
-
     return repoPath.endsWith(p.separator) ? repoPath : repoPath + p.separator;
   }
 }
