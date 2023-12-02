@@ -137,14 +137,30 @@ class SettingsStorageScreen extends StatelessWidget {
               if (newVal == false) {
                 await moveBackToInternal(false);
               } else {
-                var path = await _getExternalDir(context);
-                Log.i("Path in external dir is $path");
-                if (path.isEmpty) {
+                var path_uri = await _getExternalDir(context);
+                Log.i("Path in external dir is $path_uri");
+                if (path_uri == null) {
                   await moveBackToInternal(false);
                   return;
                 }
 
+                // debug permissions:
+                final List<saf.UriPermission>? persistedUris = await saf.persistedUriPermissions();
+                Log.i("Persisted Uris: $persistedUris");
+
+                // assert (path_uri.scheme.toLowerCase() == "content");
+                var android_prefix = "/tree";
+                var my_prefix = '/storage';
+                Log.i("path_uri.path is ${path_uri.path}");
+                // LB: This content-uri to path conversion is highly unreliable. And even if it works, something permissions fails..
+                /*
+                   > If you have an uri permission you have permission to use that uri.
+                   > This does not mean that if you manage to find its file system path that you have permission for that path.
+                   https://stackoverflow.com/questions/70072550/android-11-scoped-storage-unable-to-use-java-io-file-even-after-uri-permissi#comment123897693_70072550
+                 */
+                var path = path_uri.path.replaceFirst("%3A","/").replaceFirst(android_prefix, my_prefix);
                 Log.i("Moving repo to $path");
+
 
                 storageConfig.storeInternally = false;
                 storageConfig.storageLocation = path;
@@ -227,7 +243,7 @@ Future<bool> _isDirWritable(String path) async {
   return true;
 }
 
-Future<String> _getExternalDir(BuildContext context) async {
+Future<Uri?> _getExternalDir(BuildContext context) async {
   var androidInfo = await DeviceInfoPlugin().androidInfo;
   var release = androidInfo.version.release; // E.g. the string "11" for Android 11
   var sdkInt = androidInfo.version.sdkInt;  // this seems more reliable
@@ -235,34 +251,19 @@ Future<String> _getExternalDir(BuildContext context) async {
   // e.g. 29 for Android 10.
   Log.i("Android release $release has SDK int $sdkInt .");
   if (sdkInt >= 29){
-    final Uri? grantedUri = await saf.openDocumentTree();
+    // grab a permission and persist it.
+    // https://developer.android.com/reference/android/content/ContentResolver#takePersistableUriPermission(android.net.Uri,%20int)
+    final Uri? grantedUri = await saf.openDocumentTree(grantWritePermission:true, persistablePermission: true);
     if (grantedUri != null) {
       Log.i('Permission granted for Uri: $grantedUri');
-      return grantedUri.toFilePath();
+      return grantedUri;
     }
     Log.e("Permission not granted for $grantedUri.");
-    return "";
-
-    /*
-    var dir = await FilePicker.platform.getDirectoryPath();
-    if (dir == null){
-      Log.e("No directory Path received.");
-      return "";
-    }
-    bool? isGranted = await saf.getDirectoryPermission(isDynamic: true);
-    if (isGranted != null && isGranted) {
-      // All is good. We could perform some file operations.
-      return dir;
-    } else {
-      // failed to get the permission
-      Log.e("Permission not granted for $dir. isGranted: $isGranted");
-      showErrorMessageSnackbar(
-        context,
-        context.loc.settingsStorageNotWritable(dir),
-      );
-      return "";
-    }
-    */
+    showErrorMessageSnackbar(
+      context,
+      context.loc.settingsStorageNotWritable("(null)"),
+    );
+    return null;
   } else {
       if (!await Permission.storage
           .request()
@@ -273,27 +274,27 @@ Future<String> _getExternalDir(BuildContext context) async {
           context,
           context.loc.settingsStoragePermissionFailed,
         );
-        return "";
+        return null;
       }
       var dir = await FilePicker.platform.getDirectoryPath();
 
       if (dir != null && dir.isNotEmpty) {
         if (await _isDirWritable(dir)) {
-          return dir;
+          return Uri.file(dir);
         } else {
           Log.e("FilePicker: Got $dir but it is not writable");
           showErrorMessageSnackbar(
             context,
             context.loc.settingsStorageNotWritable(dir),
           );
-          return "";
+          return null;
         }
       }
 
       var path = await AndroidExternalStorage.getExternalStorageDirectory();
       if (path != null) {
         if (await _isDirWritable(path)) {
-          return path;
+          return Uri.file(path);
         } else {
           Log.e("ExtStorage: Got $path but it is not writable");
         }
@@ -304,13 +305,13 @@ Future<String> _getExternalDir(BuildContext context) async {
         path = extDir.path;
 
         if (await _isDirWritable(path)) {
-          return path;
+          return Uri.file(path);
         } else {
           Log.e("ExternalStorageDirectory: Got $path but it is not writable");
         }
       }
 
-      return "";
+      return null;
   }
 }
 
