@@ -252,7 +252,31 @@ Future<String?> _getExternalDir(BuildContext context) async {
   Log.i("Android release $release has SDK int $sdkInt .");
   // I no longer believe I can make this work on newer android versions.
   bool android_made_filesystem_access_to_non_media_files_impossible = true;
-  if (sdkInt > 29 && !android_made_filesystem_access_to_non_media_files_impossible){
+  if (sdkInt == 29){
+    /*
+      this developers.android page states to run on android 11 you need to target android 10 or lower.
+       (API level 29). Declare the WRITE_EXTERNAL_STORAGE permission. And now use direct file access.
+      https://developer.android.com/training/data-storage/use-cases#write-files-secondary-storage-volumes
+
+      ... I guess to "use the scoped storage model" I need to remove the legacy external-SD request in the manifest.
+      // TODO: is the legacy stuff important for any other sdkInt?
+     */
+    // grab a permission and persist it.
+    // https://developer.android.com/reference/android/content/ContentResolver#takePersistableUriPermission(android.net.Uri,%20int)
+    final Uri? grantedUri = await saf.openDocumentTree(grantWritePermission:true, persistablePermission: true);
+    if (grantedUri != null) {
+      Log.i('Permission granted for Uri: $grantedUri');
+      return "/storage/6F63-1277/priv-notes-lucid";
+      // unless I can figure out how to work with the native path.
+    }
+    Log.e("Permission not granted for $grantedUri.");
+    showErrorMessageSnackbar(
+      context,
+      context.loc.settingsStorageNotWritable("(null)"),
+    );
+    return null;
+
+  } else if (sdkInt > 29 && !android_made_filesystem_access_to_non_media_files_impossible){
     // grab a permission and persist it.
     // https://developer.android.com/reference/android/content/ContentResolver#takePersistableUriPermission(android.net.Uri,%20int)
     final Uri? grantedUri = await saf.openDocumentTree(grantWritePermission:true, persistablePermission: true);
