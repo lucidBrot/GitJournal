@@ -278,20 +278,28 @@ Future<String?> _getExternalDir(BuildContext context) async {
       return null;
     }
     var dir = await FilePicker.platform.getDirectoryPath();
-    if (dir != null && sdkInt >= 30 && !(await _isDirWritable(dir))) {
-      // dir is not writable. Try the overkill solution that google play store forbids.
-      // Available only from Android 11 (API 30). Android 10 should be able to do this with
-      // READ/WRITE permissions + requestLegacyExternalStorage.
-      Log.w("dir is not writable.. trying to get stronger permissions...");
-      if (!await Permission.manageExternalStorage
-          .request()
-          .isGranted) {
-        Log.e("MANAGE_EXTERNAL_STORAGE Permission Denied");
-        showErrorMessageSnackbar(
-          context,
-          "MANAGE_EXTERNAL_STORAGE Permission Denied",
-        );
-        return null;
+    if (dir == null){
+      return null;
+    } else if (sdkInt >= 30) {
+      if( await _isDirWritable(dir)) {
+        Log.i("Dir is writable.");
+        return dir;
+      } else {
+        Log.i("Dir is NOT writable.");
+        // dir is not writable. Try the overkill solution that google play store forbids.
+        // Available only from Android 11 (API 30). Android 10 should be able to do this with
+        // READ/WRITE permissions + requestLegacyExternalStorage.
+        Log.w("dir is not writable.. trying to get stronger permissions...");
+        if (!await Permission.manageExternalStorage
+            .request()
+            .isGranted) {
+          Log.e("MANAGE_EXTERNAL_STORAGE Permission Denied");
+          showErrorMessageSnackbar(
+            context,
+            "MANAGE_EXTERNAL_STORAGE Permission Denied",
+          );
+          return null;
+        }
       }
     }
     return dir;
