@@ -261,20 +261,20 @@ Future<String?> _getExternalDir(BuildContext context) async {
       ... I guess to "use the scoped storage model" I need to remove the legacy external-SD request in the manifest.
       // TODO: is the legacy stuff important for any other sdkInt?
      */
-    // grab a permission and persist it.
-    // https://developer.android.com/reference/android/content/ContentResolver#takePersistableUriPermission(android.net.Uri,%20int)
-    final Uri? grantedUri = await saf.openDocumentTree(grantWritePermission:true, persistablePermission: true);
-    if (grantedUri != null) {
-      Log.i('Permission granted for Uri: $grantedUri');
-      return "/storage/6F63-1277/priv-notes-lucid";
-      // unless I can figure out how to work with the native path.
+    if (!await Permission.storage
+        .request()
+        .isGranted) {
+      // on android 13 this will "succeed" but not give permission.
+      // probably already on android 10 the same behavior.
+      Log.e("Storage Permission Denied");
+      showErrorMessageSnackbar(
+        context,
+        context.loc.settingsStoragePermissionFailed,
+      );
+      return null;
     }
-    Log.e("Permission not granted for $grantedUri.");
-    showErrorMessageSnackbar(
-      context,
-      context.loc.settingsStorageNotWritable("(null)"),
-    );
-    return null;
+    var dir = await FilePicker.platform.getDirectoryPath();
+    return dir;
 
   } else if (sdkInt > 29 && !android_made_filesystem_access_to_non_media_files_impossible){
     // grab a permission and persist it.
