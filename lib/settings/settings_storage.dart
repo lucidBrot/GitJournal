@@ -159,7 +159,6 @@ class SettingsStorageScreen extends StatelessWidget {
                 //    https://stackoverflow.com/questions/70072550/android-11-scoped-storage-unable-to-use-java-io-file-even-after-uri-permissi#comment123897693_70072550
                 //  */
                 String path = path_uri.toString();
-                path = "/storage/6F63-1277/priv-notes-lucid";
                 Log.i("Moving repo to $path");
 
                 storageConfig.storeInternally = false;
@@ -243,14 +242,16 @@ Future<bool> _isDirWritable(String path) async {
   return true;
 }
 
-Future<Uri?> _getExternalDir(BuildContext context) async {
+Future<String?> _getExternalDir(BuildContext context) async {
   var androidInfo = await DeviceInfoPlugin().androidInfo;
   var release = androidInfo.version.release; // E.g. the string "11" for Android 11
   var sdkInt = androidInfo.version.sdkInt;  // this seems more reliable
   // https://developer.android.com/reference/android/os/Build.VERSION.html
   // e.g. 29 for Android 10.
+  // TODO: does this if-statement even make sense? Is it relevant what sdkInt says or what the target version is?
+  //       Or does sdkInt say something different?
   Log.i("Android release $release has SDK int $sdkInt .");
-  if (sdkInt >= 29){
+  if (sdkInt > 29){
     // grab a permission and persist it.
     // https://developer.android.com/reference/android/content/ContentResolver#takePersistableUriPermission(android.net.Uri,%20int)
     final Uri? grantedUri = await saf.openDocumentTree(grantWritePermission:true, persistablePermission: true);
