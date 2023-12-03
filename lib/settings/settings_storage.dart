@@ -242,7 +242,7 @@ Future<bool> _isDirWritable(String path) async {
   return true;
 }
 
-Future<String?> _getExternalDir(BuildContext context) async {
+Future<Uri?> _getExternalDir(BuildContext context) async {
   var androidInfo = await DeviceInfoPlugin().androidInfo;
   var release = androidInfo.version.release; // E.g. the string "11" for Android 11
   var sdkInt = androidInfo.version.sdkInt;  // this seems more reliable
@@ -269,7 +269,8 @@ Future<String?> _getExternalDir(BuildContext context) async {
       if (!await Permission.storage
           .request()
           .isGranted) {
-        // on android 13 this will fail silently.
+        // on android 13 this will "succeed" but not give permission.
+        // probably already on android 10 the same behavior.
         Log.e("Storage Permission Denied");
         showErrorMessageSnackbar(
           context,
