@@ -138,27 +138,28 @@ class SettingsStorageScreen extends StatelessWidget {
               if (newVal == false) {
                 await moveBackToInternal(false);
               } else {
-                var path_uri = await _getExternalDir(context);
-                Log.i("Path in external dir is $path_uri");
-                if (path_uri == null) {
+                var path = await _getExternalDir(context);
+                Log.i("Path in external dir is $path");
+                if (path == null) {
                   await moveBackToInternal(false);
                   return;
                 }
 
-                // debug permissions:
-                final List<saf.UriPermission>? persistedUris = await saf.persistedUriPermissions();
-                Log.i("Persisted Uris: $persistedUris");
-                // debug: attempt to create a file in that dir:
-                saf.DocumentFile? df = await saf.DocumentFile.fromTreeUri(path_uri);
-                df?.createFile(mimeType: "text/plain", displayName: "myDebugFile", content: "testing");
-                df?.createDirectory("lmaodir");
+                // TODO: at cleanup of my commits, I should remove this and the saf dependency
+                // // debug permissions:
+                // final List<saf.UriPermission>? persistedUris = await saf.persistedUriPermissions();
+                // Log.i("Persisted Uris: $persistedUris");
+                // // debug: attempt to create a file in that dir:
+                // saf.DocumentFile? df = await saf.DocumentFile.fromTreeUri(path_uri);
+                // df?.createFile(mimeType: "text/plain", displayName: "myDebugFile", content: "testing");
+                // df?.createDirectory("lmaodir");
 
                 // /*
                 //    > If you have an uri permission you have permission to use that uri.
                 //    > This does not mean that if you manage to find its file system path that you have permission for that path.
                 //    https://stackoverflow.com/questions/70072550/android-11-scoped-storage-unable-to-use-java-io-file-even-after-uri-permissi#comment123897693_70072550
                 //  */
-                String path = path_uri.toString();
+                // String path = path.toString();
                 Log.i("Moving repo to $path");
 
                 storageConfig.storeInternally = false;
@@ -242,22 +243,23 @@ Future<bool> _isDirWritable(String path) async {
   return true;
 }
 
-Future<Uri?> _getExternalDir(BuildContext context) async {
+Future<String?> _getExternalDir(BuildContext context) async {
   var androidInfo = await DeviceInfoPlugin().androidInfo;
   var release = androidInfo.version.release; // E.g. the string "11" for Android 11
   var sdkInt = androidInfo.version.sdkInt;  // this seems more reliable
   // https://developer.android.com/reference/android/os/Build.VERSION.html
   // e.g. 29 for Android 10.
-  // TODO: does this if-statement even make sense? Is it relevant what sdkInt says or what the target version is?
-  //       Or does sdkInt say something different?
   Log.i("Android release $release has SDK int $sdkInt .");
-  if (sdkInt > 29){
+  // I no longer believe I can make this work on newer android versions.
+  bool android_made_filesystem_access_to_non_media_files_impossible = true;
+  if (sdkInt > 29 && !android_made_filesystem_access_to_non_media_files_impossible){
     // grab a permission and persist it.
     // https://developer.android.com/reference/android/content/ContentResolver#takePersistableUriPermission(android.net.Uri,%20int)
     final Uri? grantedUri = await saf.openDocumentTree(grantWritePermission:true, persistablePermission: true);
     if (grantedUri != null) {
       Log.i('Permission granted for Uri: $grantedUri');
-      return grantedUri;
+      return grantedUri.toFilePath(); // returning an uri would make sense for new android versions,
+                         // unless I can figure out how to work with the native path.
     }
     Log.e("Permission not granted for $grantedUri.");
     showErrorMessageSnackbar(
@@ -282,7 +284,7 @@ Future<Uri?> _getExternalDir(BuildContext context) async {
 
       if (dir != null && dir.isNotEmpty) {
         if (await _isDirWritable(dir)) {
-          return Uri.file(dir);
+          return dir; //return Uri.file(dir);
         } else {
           Log.e("FilePicker: Got $dir but it is not writable");
           showErrorMessageSnackbar(
@@ -296,7 +298,7 @@ Future<Uri?> _getExternalDir(BuildContext context) async {
       var path = await AndroidExternalStorage.getExternalStorageDirectory();
       if (path != null) {
         if (await _isDirWritable(path)) {
-          return Uri.file(path);
+          return path; //return Uri.file(path);
         } else {
           Log.e("ExtStorage: Got $path but it is not writable");
         }
@@ -307,7 +309,7 @@ Future<Uri?> _getExternalDir(BuildContext context) async {
         path = extDir.path;
 
         if (await _isDirWritable(path)) {
-          return Uri.file(path);
+          return path; //return Uri.file(path);
         } else {
           Log.e("ExternalStorageDirectory: Got $path but it is not writable");
         }
