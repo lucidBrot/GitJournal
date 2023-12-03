@@ -252,14 +252,18 @@ Future<String?> _getExternalDir(BuildContext context) async {
   Log.i("Android release $release has SDK int $sdkInt .");
   // I no longer believe I can make this work on newer android versions.
   bool android_made_filesystem_access_to_non_media_files_impossible = true;
-  if (sdkInt == 29){
+  if (sdkInt == 29 ||
+      (sdkInt > 29 && android_made_filesystem_access_to_non_media_files_impossible)
+  ){
     /*
       this developers.android page states to run on android 11 you need to target android 10 or lower.
        (API level 29). Declare the WRITE_EXTERNAL_STORAGE permission. And now use direct file access.
       https://developer.android.com/training/data-storage/use-cases#write-files-secondary-storage-volumes
 
       ... I guess to "use the scoped storage model" I need to remove the legacy external-SD request in the manifest.
-      // TODO: is the legacy stuff important for any other sdkInt?
+      ... but neither works on my device, except for app-specific folders...
+      ... So I guess we just go overkill (only for my personal device, not to upstream this)
+          and use ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION.
      */
     if (!await Permission.storage
         .request()
@@ -274,6 +278,22 @@ Future<String?> _getExternalDir(BuildContext context) async {
       return null;
     }
     var dir = await FilePicker.platform.getDirectoryPath();
+    if (dir != null && sdkInt >= 30 && !(await _isDirWritable(dir))) {
+      // dir is not writable. Try the overkill solution that google play store forbids.
+      // Available only from Android 11 (API 30). Android 10 should be able to do this with
+      // READ/WRITE permissions + requestLegacyExternalStorage.
+      Log.w("dir is not writable.. trying to get stronger permissions...");
+      if (!await Permission.manageExternalStorage
+          .request()
+          .isGranted) {
+        Log.e("MANAGE_EXTERNAL_STORAGE Permission Denied");
+        showErrorMessageSnackbar(
+          context,
+          "MANAGE_EXTERNAL_STORAGE Permission Denied",
+        );
+        return null;
+      }
+    }
     return dir;
 
   } else if (sdkInt > 29 && !android_made_filesystem_access_to_non_media_files_impossible){
