@@ -236,7 +236,8 @@ Future<bool> _isDirWritable(String path) async {
     dynamic _;
     _ = await file.writeAsString("test");
     _ = await file.delete();
-  } catch (_) {
+  } catch (e) {
+    Log.e("_isDirWritable failed with $e");
     return false;
   }
 
@@ -301,6 +302,12 @@ Future<String?> _getExternalDir(BuildContext context) async {
           return null;
         }
       }
+    } else {
+      if( !(await _isDirWritable(dir))) {
+        Log.e("Dir is NOT writable..");
+        return null;
+      }
+      Log.i("Dir is writable..");
     }
     return dir;
 
