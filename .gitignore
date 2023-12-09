@@ -31,6 +31,7 @@
 /build/
 pubspec_overrides.yaml
 Podfile.lock
+/secrets/key.properties
 
 # Web related
 lib/generated_plugin_registrant.dart
