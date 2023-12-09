@@ -74,6 +74,16 @@ class _ExperimentalSettingsScreenState
               },
             ),
             SwitchListTile(
+              title: Text("Unlock Pro"),
+              value: appConfig.proMode,
+              onChanged: (bool newVal) {
+                appConfig.validateProMode = false;
+                appConfig.proMode = newVal;
+                appConfig.save();
+                setState(() {});
+              },
+            ),
+            SwitchListTile(
               title: Text(context.loc.settingsExperimentalExperimentalGitOps),
               value: appConfig.experimentalGitOps,
               onChanged: (bool newVal) {
@@ -100,67 +110,9 @@ class _ExperimentalSettingsScreenState
                 setState(() {});
               },
             ),
-            ListTile(
-              title: const Text('Enter Pro Password'),
-              subtitle: Text('Pro: ${AppConfig.instance.proMode}'),
-              onTap: () async {
-                await showDialog(
-                  context: context,
-                  builder: (context) => _PasswordForm(),
-                );
-                setState(() {});
-              },
-            ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _PasswordForm extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Enter Pro Password'),
-      content: TextField(
-        style: Theme.of(context).textTheme.titleLarge,
-        decoration: const InputDecoration(
-          icon: Icon(Icons.security_rounded),
-          hintText: 'Enter Password',
-          labelText: 'Password',
-        ),
-        onChanged: (String value) {
-          value = value.trim();
-          if (value.isEmpty) {
-            return;
-          }
-
-          const salt = 'randomSaltGitJournal';
-          var sha1Digest = sha1.convert(utf8.encode(value + salt));
-
-          if (sha1Digest.toString() !=
-              '27538d8231e49655fd1c26c7b8495c2c870c741b') {
-            Log.e("Pro Password Incorrect");
-            return;
-          }
-
-          Log.i('Unlocking Pro Mode');
-
-          var appConfig = AppConfig.instance;
-          appConfig.validateProMode = false;
-          appConfig.proMode = true;
-          appConfig.save();
-        },
-      ),
-      actions: <Widget>[
-        TextButton(
-          child: Text(context.loc.settingsOk),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        )
-      ],
     );
   }
 }
